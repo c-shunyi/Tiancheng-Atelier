@@ -1,0 +1,68 @@
+import type { UserProfile, UserStoreState } from '@/types/app.uts'
+import { clearAuthStorage, getToken, getUserProfile, setToken, setUserProfile } from '@/utils/storage.uts'
+
+const state = reactive({
+  token: getToken(),
+  userInfo: getUserProfile()
+} as UserStoreState)
+
+/**
+ * 从本地缓存恢复登录态。
+ */
+export const hydrateUserStore = () => {
+  state.token = getToken()
+  state.userInfo = getUserProfile()
+}
+
+/**
+ * 生成演示用户数据，方便基础项目联调。
+ */
+export const createDemoUser = () : UserProfile => {
+  return {
+    id: 'demo-user-001',
+    nickname: '天成体验账号',
+    phone: '13800138000',
+    role: '设计顾问',
+    city: '上海'
+  }
+}
+
+/**
+ * 写入登录会话。
+ */
+export const setAuthSession = (token : string, userInfo : UserProfile) => {
+  setToken(token)
+  setUserProfile(userInfo)
+  state.token = token
+  state.userInfo = userInfo
+}
+
+/**
+ * 清理登录会话。
+ */
+export const clearAuthSession = () => {
+  clearAuthStorage()
+  state.token = ''
+  state.userInfo = null
+}
+
+/**
+ * 判断当前是否已登录。
+ */
+export const isLoggedIn = () : boolean => {
+  return state.token.length > 0
+}
+
+/**
+ * 提供给页面使用的 store 访问器。
+ */
+export const useUserStore = () => {
+  return {
+    state,
+    hydrateUserStore,
+    createDemoUser,
+    setAuthSession,
+    clearAuthSession,
+    isLoggedIn
+  }
+}

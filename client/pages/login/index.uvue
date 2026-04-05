@@ -1,0 +1,53 @@
+<template>
+  <scroll-view class="page-scroll" scroll-y>
+    <view class="page-shell">
+      <uni-card title="登录演示页" sub-title="当前基础项目使用本地 mock 登录，方便先把工程骨架跑通">
+        <text class="hero-desc">
+          点击按钮后会写入示例 token 和用户信息，然后跳转到“我的”页。等你接入真实接口时，只需要把这里替换成接口调用即可。
+        </text>
+      </uni-card>
+
+      <uni-section title="示例链路" type="line" />
+      <uni-list>
+        <uni-list-item title="1. 写入 token" note="storage.uts" />
+        <uni-list-item title="2. 更新全局状态" note="store/user.uts" />
+        <uni-list-item title="3. 跳转个人中心" note="switchTab -> /pages/user/index" />
+      </uni-list>
+
+      <view class="action-row">
+        <button class="primary-btn" @click="handleLogin">写入示例登录态并进入我的</button>
+        <button class="secondary-btn" @click="goHomeTab">暂不登录，先回首页</button>
+      </view>
+    </view>
+  </scroll-view>
+</template>
+
+<script setup lang="uts">
+  import { useUserStore } from '@/store/user.uts'
+
+  const userStore = useUserStore()
+
+  /**
+   * 写入示例登录数据并跳转到个人中心。
+   */
+  const handleLogin = () => {
+    const demoUser = userStore.createDemoUser()
+    userStore.setAuthSession('demo-token-tiancheng-atelier', demoUser)
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success'
+    })
+    uni.switchTab({
+      url: '/pages/user/index'
+    })
+  }
+
+  /**
+   * 返回首页 tab 页。
+   */
+  const goHomeTab = () => {
+    uni.switchTab({
+      url: '/pages/index/index'
+    })
+  }
+</script>

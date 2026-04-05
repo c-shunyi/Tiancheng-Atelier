@@ -1,0 +1,26 @@
+{
+  "name": "Tiancheng Atelier",
+  "appid": "__UNI__TIANCHENG_ATELIER__",
+  "description": "uni-app x 基础项目骨架",
+  "versionName": "0.1.0",
+  "versionCode": 100,
+  "uni-app-x": {
+    "vapor": true,
+    "styleIsolationVersion": "2"
+  },
+  "vueVersion": "3",
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true,
+    "libVersion": "3.7.1"
+  },
+  "web": {
+    "router": {
+      "base": "/",
+      "mode": ""
+    }
+  }
+}

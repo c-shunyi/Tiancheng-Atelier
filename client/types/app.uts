@@ -1,0 +1,30 @@
+/**
+ * 用户信息结构。
+ */
+export type UserProfile = {
+  id: string
+  nickname: string
+  phone: string
+  role: string
+  city: string
+}
+
+/**
+ * 全局用户状态结构。
+ */
+export type UserStoreState = {
+  token: string
+  userInfo: UserProfile | null
+}
+
+/**
+ * 请求封装配置。
+ */
+export type ApiRequestOptions = {
+  url: string
+  method?: RequestMethod
+  data?: any
+  header?: UTSJSONObject | null
+  loading?: boolean
+  loadingTitle?: string
+}

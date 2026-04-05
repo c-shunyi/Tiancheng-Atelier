@@ -1,0 +1,152 @@
+import { BASE_URL, REQUEST_TIMEOUT } from '@/config/env.uts'
+import { clearAuthSession } from '@/store/user.uts'
+import { getToken } from '@/utils/storage.uts'
+import type { ApiRequestOptions } from '@/types/app.uts'
+
+/**
+ * 统一拼接请求地址。
+ */
+const buildRequestUrl = (url : string) : string => {
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  if (url.startsWith('/')) {
+    return BASE_URL + url
+  }
+  return `${BASE_URL}/${url}`
+}
+
+/**
+ * 统一组装请求头，并自动追加 token。
+ */
+const buildRequestHeader = (header : UTSJSONObject | null = null) : UTSJSONObject => {
+  const requestHeader = {
+    'Content-Type': 'application/json'
+  } as UTSJSONObject
+  if (header != null) {
+    Object.keys(header).forEach((key) => {
+      requestHeader[key] = header[key]
+    })
+  }
+  const token = getToken()
+  if (token.length > 0) {
+    requestHeader['Authorization'] = `Bearer ${token}`
+  }
+  return requestHeader
+}
+
+/**
+ * 从响应体中尽量提取易读错误信息。
+ */
+const resolveErrorMessage = (payload : any, fallback : string, statusCode : number) : string => {
+  if (payload != null && typeof payload === 'object') {
+    const data = payload as UTSJSONObject
+    const message = data['message']
+    if (typeof message === 'string' && message.length > 0) {
+      return message
+    }
+  }
+  if (fallback.length > 0) {
+    return fallback
+  }
+  return `请求失败(${statusCode})`
+}
+
+/**
+ * 按需关闭 loading。
+ */
+const closeLoading = (shouldShowLoading : boolean) => {
+  if (shouldShowLoading) {
+    uni.hideLoading()
+  }
+}
+
+/**
+ * 登录过期时清理本地状态并跳转登录页。
+ */
+const redirectToLogin = () => {
+  clearAuthSession()
+  uni.showToast({
+    title: '登录已过期，请重新登录',
+    icon: 'none'
+  })
+  uni.reLaunch({
+    url: '/pages/login/index'
+  })
+}
+
+/**
+ * 通用请求方法。
+ */
+export const request = (options : ApiRequestOptions) : Promise<any> => {
+  const shouldShowLoading = options.loading == null ? true : options.loading
+  const loadingTitle = options.loadingTitle == null ? '加载中...' : options.loadingTitle
+
+  if (shouldShowLoading) {
+    uni.showLoading({
+      title: loadingTitle,
+      mask: true
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url: buildRequestUrl(options.url),
+      method: options.method == null ? 'GET' : options.method,
+      data: options.data,
+      header: buildRequestHeader(options.header),
+      timeout: REQUEST_TIMEOUT,
+      success: (res) => {
+        closeLoading(shouldShowLoading)
+        if (res.statusCode == 401) {
+          redirectToLogin()
+          reject('Unauthorized')
+          return
+        }
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data)
+          return
+        }
+        const message = resolveErrorMessage(res.data, res.errMsg, res.statusCode)
+        uni.showToast({
+          title: message,
+          icon: 'none'
+        })
+        reject(message)
+      },
+      fail: (error) => {
+        closeLoading(shouldShowLoading)
+        const message = error.errMsg.length > 0 ? error.errMsg : '网络请求失败'
+        uni.showToast({
+          title: message,
+          icon: 'none'
+        })
+        reject(message)
+      }
+    })
+  })
+}
+
+/**
+ * GET 请求快捷方法。
+ */
+export const get = (url : string, data : any = null, loading : boolean = true) : Promise<any> => {
+  return request({
+    url,
+    method: 'GET',
+    data,
+    loading
+  })
+}
+
+/**
+ * POST 请求快捷方法。
+ */
+export const post = (url : string, data : any = null, loading : boolean = true) : Promise<any> => {
+  return request({
+    url,
+    method: 'POST',
+    data,
+    loading
+  })
+}

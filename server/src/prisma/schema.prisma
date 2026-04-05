@@ -1,0 +1,44 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../generated/prisma"
+  moduleFormat           = "cjs"
+  generatedFileExtension = "ts"
+  importFileExtension    = ""
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum AdminRole {
+  admin
+  super_admin
+}
+
+enum AdminStatus {
+  active
+  disabled
+}
+
+model ExampleItem {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(120)
+  content   String?  @db.Text
+  published Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("example_items")
+}
+
+model AdminUser {
+  id           Int         @id @default(autoincrement())
+  username     String      @unique @db.VarChar(64)
+  passwordHash String      @map("password_hash") @db.VarChar(255)
+  role         AdminRole   @default(admin)
+  status       AdminStatus @default(active)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}

@@ -1,0 +1,70 @@
+import type { UserProfile } from '@/types/app.uts'
+
+const TOKEN_KEY = 'tiancheng.token'
+const USER_KEY = 'tiancheng.user'
+
+/**
+ * 写入通用本地缓存。
+ */
+export const setStorage = (key : string, value : any) => {
+  uni.setStorageSync(key, value)
+}
+
+/**
+ * 读取通用本地缓存。
+ */
+export const getStorage = (key : string) : any => {
+  return uni.getStorageSync(key)
+}
+
+/**
+ * 删除指定本地缓存。
+ */
+export const removeStorage = (key : string) => {
+  uni.removeStorageSync(key)
+}
+
+/**
+ * 读取 token。
+ */
+export const getToken = () : string => {
+  const value = getStorage(TOKEN_KEY)
+  return typeof value === 'string' ? value : ''
+}
+
+/**
+ * 写入 token。
+ */
+export const setToken = (token : string) => {
+  setStorage(TOKEN_KEY, token)
+}
+
+/**
+ * 清理 token。
+ */
+export const clearToken = () => {
+  removeStorage(TOKEN_KEY)
+}
+
+/**
+ * 读取用户资料。
+ */
+export const getUserProfile = () : UserProfile | null => {
+  const value = getStorage(USER_KEY)
+  return value == null ? null : value as UserProfile
+}
+
+/**
+ * 写入用户资料。
+ */
+export const setUserProfile = (userInfo : UserProfile) => {
+  setStorage(USER_KEY, userInfo)
+}
+
+/**
+ * 清理认证相关缓存。
+ */
+export const clearAuthStorage = () => {
+  clearToken()
+  removeStorage(USER_KEY)
+}
