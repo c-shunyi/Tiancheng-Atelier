@@ -35,9 +35,9 @@
 
       <uni-section title="快捷操作" type="line" />
       <view class="action-row">
-        <button class="primary-btn" @click="handleMockLogin">写入示例登录态</button>
+        <button class="primary-btn" v-if="!userStore.isLoggedIn()" @click="goLoginPage">微信登录</button>
         <button class="secondary-btn" @click="goUserTab">查看个人中心</button>
-        <button class="secondary-btn" @click="handleLogout">清空登录态</button>
+        <button class="secondary-btn" v-if="userStore.isLoggedIn()" @click="handleLogout">退出登录</button>
       </view>
     </view>
   </scroll-view>
@@ -61,7 +61,7 @@
   ] as string[])
 
   const statusText = computed(() : string => {
-    return userStore.isLoggedIn() ? '已登录（本地缓存中存在 token）' : '未登录（可点击下方按钮写入示例数据）'
+    return userStore.isLoggedIn() ? '已登录' : '未登录'
   })
 
   const tokenText = computed(() : string => {
@@ -76,16 +76,11 @@
   }
 
   /**
-   * 写入一份示例登录数据，方便联调页面和 store。
+   * 跳转到登录页。
    */
-  const handleMockLogin = () => {
-    const demoToken = 'demo-token-tiancheng-atelier'
-    const demoUser = userStore.createDemoUser()
-    userStore.setAuthSession(demoToken, demoUser)
-    refreshTimestamp()
-    uni.showToast({
-      title: '示例登录态已写入',
-      icon: 'success'
+  const goLoginPage = () => {
+    uni.navigateTo({
+      url: '/pages/login/index'
     })
   }
 

@@ -1,21 +1,16 @@
 <template>
   <scroll-view class="page-scroll" scroll-y>
     <view class="page-shell">
-      <uni-card title="登录演示页" sub-title="当前基础项目使用本地 mock 登录，方便先把工程骨架跑通">
+      <uni-card title="微信登录" sub-title="使用微信账号快速登录">
         <text class="hero-desc">
-          点击按钮后会写入示例 token 和用户信息，然后跳转到“我的”页。等你接入真实接口时，只需要把这里替换成接口调用即可。
+          点击下方按钮，将通过微信授权登录。首次登录会自动创建账号。
         </text>
       </uni-card>
 
-      <uni-section title="示例链路" type="line" />
-      <uni-list>
-        <uni-list-item title="1. 写入 token" note="storage.uts" />
-        <uni-list-item title="2. 更新全局状态" note="store/user.uts" />
-        <uni-list-item title="3. 跳转个人中心" note="switchTab -> /pages/user/index" />
-      </uni-list>
-
-      <view class="action-row">
-        <button class="primary-btn" @click="handleLogin">写入示例登录态并进入我的</button>
+      <view class="action-row" style="margin-top: 40rpx;">
+        <button class="primary-btn" :disabled="logging" @click="handleWxLogin">
+          {{ logging ? '登录中...' : '微信一键登录' }}
+        </button>
         <button class="secondary-btn" @click="goHomeTab">暂不登录，先回首页</button>
       </view>
     </view>
@@ -23,22 +18,58 @@
 </template>
 
 <script setup lang="uts">
+  import { wxLogin } from '@/api/wx.uts'
   import { useUserStore } from '@/store/user.uts'
+  import type { UserProfile } from '@/types/app.uts'
 
   const userStore = useUserStore()
+  const logging = ref(false)
 
   /**
-   * 写入示例登录数据并跳转到个人中心。
+   * 调用 wx.login 获取 code，发送到后端完成登录。
    */
-  const handleLogin = () => {
-    const demoUser = userStore.createDemoUser()
-    userStore.setAuthSession('demo-token-tiancheng-atelier', demoUser)
-    uni.showToast({
-      title: '登录成功',
-      icon: 'success'
-    })
-    uni.switchTab({
-      url: '/pages/user/index'
+  const handleWxLogin = () => {
+    if (logging.value) return
+    logging.value = true
+
+    uni.login({
+      provider: 'weixin',
+      success: (loginRes) => {
+        wxLogin(loginRes.code).then((res : any) => {
+          const data = res as UTSJSONObject
+          const result = data['data'] as UTSJSONObject
+          const tokenStr = result['token'] as string
+          const userInfoObj = result['userInfo'] as UTSJSONObject
+
+          const userInfo = {
+            id: userInfoObj['id'] as number,
+            nickname: userInfoObj['nickname'] as string,
+            avatar: userInfoObj['avatar'] as string,
+            phone: userInfoObj['phone'] as string
+          } as UserProfile
+
+          userStore.setAuthSession(tokenStr, userInfo)
+
+          uni.showToast({
+            title: '登录成功',
+            icon: 'success'
+          })
+          uni.switchTab({
+            url: '/pages/user/index'
+          })
+        }).catch((_err : any) => {
+          // 错误 toast 已在 request.uts 中统一处理
+        }).finally(() => {
+          logging.value = false
+        })
+      },
+      fail: (_err) => {
+        logging.value = false
+        uni.showToast({
+          title: '微信登录授权失败',
+          icon: 'none'
+        })
+      }
     })
   }
 

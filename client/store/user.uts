@@ -15,19 +15,6 @@ export const hydrateUserStore = () => {
 }
 
 /**
- * 生成演示用户数据，方便基础项目联调。
- */
-export const createDemoUser = () : UserProfile => {
-  return {
-    id: 'demo-user-001',
-    nickname: '天成体验账号',
-    phone: '13800138000',
-    role: '设计顾问',
-    city: '上海'
-  }
-}
-
-/**
  * 写入登录会话。
  */
 export const setAuthSession = (token : string, userInfo : UserProfile) => {
@@ -60,7 +47,6 @@ export const useUserStore = () => {
   return {
     state,
     hydrateUserStore,
-    createDemoUser,
     setAuthSession,
     clearAuthSession,
     isLoggedIn

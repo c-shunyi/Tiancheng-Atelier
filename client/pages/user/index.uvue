@@ -4,17 +4,13 @@
       <uni-section title="个人中心" type="line" />
 
       <view v-if="loggedIn">
-        <uni-card title="当前用户" sub-title="以下信息来自全局 store 与本地缓存恢复">
-          <view class="tag-row">
-            <uni-tag :text="roleText" type="success" size="small" />
-            <uni-tag text="演示账号" type="primary" size="small" />
-          </view>
+        <uni-card title="当前用户" sub-title="以下信息来自微信登录">
+          <text class="hero-desc">{{ nicknameText }}</text>
         </uni-card>
 
         <uni-list>
           <uni-list-item title="昵称" :rightText="nicknameText" />
           <uni-list-item title="手机号" :rightText="phoneText" />
-          <uni-list-item title="所在城市" :rightText="cityText" />
           <uni-list-item title="Token" :note="tokenText" />
         </uni-list>
 
@@ -27,10 +23,10 @@
       <view v-else class="empty-block">
         <text class="empty-title">你还没有登录</text>
         <text class="empty-desc">
-          这个页面会直接读取 `store/user.uts` 中的状态。如果没有登录态，可以前往登录页一键写入示例数据。
+          点击下方按钮，使用微信账号快速登录。
         </text>
         <view class="action-row" style="margin-top: 24rpx;">
-          <button class="primary-btn" @click="goLoginPage">前往登录页</button>
+          <button class="primary-btn" @click="goLoginPage">前往登录</button>
           <button class="secondary-btn" @click="goHomeTab">返回首页</button>
         </view>
       </view>
@@ -54,19 +50,15 @@
   })
 
   const nicknameText = computed(() : string => {
-    return profile.value == null ? '-' : profile.value.nickname
+    const p = profile.value
+    if (p == null) return '-'
+    return p.nickname.length > 0 ? p.nickname : '微信用户'
   })
 
   const phoneText = computed(() : string => {
-    return profile.value == null ? '-' : formatPhone(profile.value.phone)
-  })
-
-  const cityText = computed(() : string => {
-    return profile.value == null ? '-' : profile.value.city
-  })
-
-  const roleText = computed(() : string => {
-    return profile.value == null ? '未登录' : profile.value.role
+    const p = profile.value
+    if (p == null) return '-'
+    return p.phone.length > 0 ? formatPhone(p.phone) : '未绑定'
   })
 
   const tokenText = computed(() : string => {
@@ -83,7 +75,7 @@
   }
 
   /**
-   * 打开登录页写入示例登录态。
+   * 打开登录页。
    */
   const goLoginPage = () => {
     uni.navigateTo({

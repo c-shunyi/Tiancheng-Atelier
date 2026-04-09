@@ -31,6 +31,8 @@ const config = {
   jwtSecret: readStringEnv("JWT_SECRET", "replace-with-a-strong-secret"),
   jwtExpiresIn: readStringEnv("JWT_EXPIRES_IN", "7d"),
   corsOrigin: readStringEnv("CORS_ORIGIN", "*"),
+  wxAppId: readStringEnv("WX_APPID", ""),
+  wxSecret: readStringEnv("WX_SECRET", ""),
 };
 
 export default config;

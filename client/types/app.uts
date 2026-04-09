@@ -2,11 +2,10 @@
  * 用户信息结构。
  */
 export type UserProfile = {
-  id: string
+  id: number
   nickname: string
+  avatar: string
   phone: string
-  role: string
-  city: string
 }
 
 /**

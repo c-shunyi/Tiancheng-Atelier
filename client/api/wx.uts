@@ -1,0 +1,28 @@
+import { post, get, request } from './request.uts'
+
+/**
+ * 微信登录：发送 code 到后端换取 token。
+ */
+export const wxLogin = (code : string) : Promise<any> => {
+  return post('/wx/login', { code }, true)
+}
+
+/**
+ * 获取当前用户资料。
+ */
+export const getUserProfile = () : Promise<any> => {
+  return get('/wx/profile', null, false)
+}
+
+/**
+ * 更新当前用户资料。
+ */
+export const updateUserProfile = (data : UTSJSONObject) : Promise<any> => {
+  return request({
+    url: '/wx/profile',
+    method: 'PUT',
+    data,
+    loading: true,
+    loadingTitle: '更新中...'
+  })
+}
