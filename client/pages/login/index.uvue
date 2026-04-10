@@ -1,17 +1,26 @@
 <template>
   <scroll-view class="page-scroll" scroll-y>
-    <view class="page-shell">
-      <uni-card title="微信登录" sub-title="使用微信账号快速登录">
-        <text class="hero-desc">
-          点击下方按钮，将通过微信授权登录。首次登录会自动创建账号。
-        </text>
-      </uni-card>
+    <view class="login-container">
+      <view class="logo-section">
+        <image class="logo" src="/static/logo.svg" mode="aspectFit"></image>
+        <text class="app-name">天成工坊</text>
+        <text class="slogan">探索美妙世界，分享生活点滴</text>
+      </view>
 
-      <view class="action-row" style="margin-top: 40rpx;">
-        <button class="primary-btn" :disabled="logging" @click="handleWxLogin">
-          {{ logging ? '登录中...' : '微信一键登录' }}
+      <view class="form-section">
+        <button class="btn-primary login-btn" :disabled="logging" @click="handleWxLogin">
+          <image class="wx-icon" src="/static/wx-icon.svg" mode="aspectFit"></image>
+          <text class="btn-text">{{ logging ? '登录中...' : '微信一键登录' }}</text>
         </button>
-        <button class="secondary-btn" @click="goHomeTab">暂不登录，先回首页</button>
+        <button class="btn-text-only back-btn" @click="goHomeTab">暂不登录，先逛逛</button>
+      </view>
+      
+      <view class="agreement-section">
+        <radio color="#007AFF" style="transform:scale(0.7)" :checked="agreed" @click="agreed = !agreed" />
+        <text class="agreement-text">我已阅读并同意</text>
+        <text class="link-text">《用户协议》</text>
+        <text class="agreement-text">和</text>
+        <text class="link-text">《隐私政策》</text>
       </view>
     </view>
   </scroll-view>
@@ -24,11 +33,20 @@
 
   const userStore = useUserStore()
   const logging = ref(false)
+  const agreed = ref(false)
 
   /**
    * 调用 wx.login 获取 code，发送到后端完成登录。
    */
   const handleWxLogin = () => {
+    if (!agreed.value) {
+      uni.showToast({
+        title: '请先阅读并同意用户协议和隐私政策',
+        icon: 'none'
+      })
+      return
+    }
+
     if (logging.value) return
     logging.value = true
 
@@ -82,3 +100,120 @@
     })
   }
 </script>
+
+<style>
+  .page-scroll {
+    flex: 1;
+    background-color: #ffffff;
+  }
+
+  .login-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 60rpx;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 120rpx;
+    margin-top: 100rpx;
+  }
+
+  .logo {
+    width: 180rpx;
+    height: 180rpx;
+    border-radius: 40rpx;
+    margin-bottom: 40rpx;
+    box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.08);
+  }
+
+  .app-name {
+    font-size: 44rpx;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 20rpx;
+    letter-spacing: 2rpx;
+  }
+
+  .slogan {
+    font-size: 28rpx;
+    color: #888888;
+    letter-spacing: 2rpx;
+  }
+
+  .form-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 60rpx;
+  }
+
+  .login-btn {
+    width: 100%;
+    height: 96rpx;
+    border-radius: 48rpx;
+    background-color: #07c160;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40rpx;
+    box-shadow: 0 8rpx 20rpx rgba(7, 193, 96, 0.3);
+    transition: all 0.3s;
+  }
+  
+  .login-btn:active {
+    transform: scale(0.98);
+    background-color: #06ad56;
+  }
+
+  .wx-icon {
+    width: 44rpx;
+    height: 44rpx;
+    margin-right: 16rpx;
+  }
+
+  .btn-text {
+    font-size: 32rpx;
+    color: #ffffff;
+    font-weight: 500;
+  }
+
+  .back-btn {
+    background-color: transparent;
+    color: #666666;
+    font-size: 28rpx;
+    padding: 20rpx;
+  }
+  
+  .back-btn::after {
+    border: none;
+  }
+
+  .agreement-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: 80rpx;
+    width: 100%;
+  }
+
+  .agreement-text {
+    font-size: 24rpx;
+    color: #999999;
+  }
+
+  .link-text {
+    font-size: 24rpx;
+    color: #007AFF;
+  }
+</style>
