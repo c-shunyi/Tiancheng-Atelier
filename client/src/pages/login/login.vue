@@ -128,6 +128,10 @@ function goRegister() {
         {{ loading ? "登录中..." : "微信一键登录" }}
       </button>
     </view>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 

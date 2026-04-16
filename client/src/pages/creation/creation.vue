@@ -1,22 +1,30 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import { useToast } from "@wot-ui/ui";
 import { createCreation, getCreation, listCreations } from "@/api/creation";
+import { listPromptPresets } from "@/api/prompt";
 import { useUserStore } from "@/store/user";
-import type { Creation } from "@/types/api";
+import type { Creation, PromptPreset } from "@/types/api";
 
-const PROMPT_MAX = 300;
 const POLL_INTERVAL_MS = 2500;
+
+const toast = useToast();
 
 const userStore = useUserStore();
 const sourcePath = ref("");
-const prompt = ref("");
+const presets = ref<PromptPreset[]>([]);
+const selectedPromptId = ref<number | null>(null);
 const submitting = ref(false);
 const tasks = ref<Creation[]>([]);
+const pickerOpen = ref(false);
 
-const promptLen = computed(() => prompt.value.length);
 const canSubmit = computed(
-  () => !submitting.value && !!sourcePath.value && prompt.value.trim().length > 0,
+  () => !submitting.value && !!sourcePath.value && selectedPromptId.value !== null,
+);
+
+const selectedPreset = computed(() =>
+  presets.value.find((p) => p.id === selectedPromptId.value) ?? null,
 );
 
 /** 每个 pending 任务对应的轮询定时器，任务结束时清理。 */
@@ -24,7 +32,7 @@ const pollTimers = new Map<number, ReturnType<typeof setInterval>>();
 
 function ensureLogin(): boolean {
   if (!userStore.isLoggedIn) {
-    uni.showToast({ title: "请先登录", icon: "none" });
+    toast.show("请先登录");
     setTimeout(() => uni.navigateTo({ url: "/pages/login/login" }), 600);
     return false;
   }
@@ -72,6 +80,7 @@ function startPolling(id: number) {
 }
 
 async function loadHistory() {
+  if (!userStore.isLoggedIn) return;
   try {
     const data = await listCreations({ page: 1, pageSize: 20 });
     tasks.value = data.list;
@@ -83,41 +92,65 @@ async function loadHistory() {
   }
 }
 
+async function loadPresets() {
+  if (!userStore.isLoggedIn) return;
+  try {
+    presets.value = await listPromptPresets();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "加载提示词失败";
+    toast.error(message);
+  }
+}
+
+function openPicker() {
+  if (presets.value.length === 0) {
+    toast.show("暂无可用风格");
+    return;
+  }
+  pickerOpen.value = true;
+}
+
+function closePicker() {
+  pickerOpen.value = false;
+}
+
+function selectPreset(id: number) {
+  selectedPromptId.value = id;
+  pickerOpen.value = false;
+}
+
 async function handleSubmit() {
   if (!ensureLogin()) return;
   if (!sourcePath.value) {
-    uni.showToast({ title: "请先选择参考图", icon: "none" });
+    toast.show("请先选择参考图");
     return;
   }
-  const trimmed = prompt.value.trim();
-  if (!trimmed) {
-    uni.showToast({ title: "请输入提示词", icon: "none" });
-    return;
-  }
-  if (trimmed.length > PROMPT_MAX) {
-    uni.showToast({ title: `提示词不能超过 ${PROMPT_MAX} 字`, icon: "none" });
+  if (selectedPromptId.value === null) {
+    toast.show("请选择一个提示词");
     return;
   }
 
   submitting.value = true;
   try {
-    const created = await createCreation({ filePath: sourcePath.value, prompt: trimmed });
+    const created = await createCreation({
+      filePath: sourcePath.value,
+      promptId: selectedPromptId.value,
+    });
     tasks.value.unshift(created);
     startPolling(created.id);
     sourcePath.value = "";
-    prompt.value = "";
-    uni.showToast({ title: "已提交，正在生成", icon: "none" });
+    selectedPromptId.value = null;
+    toast.success("已提交，正在生成");
   } catch (err) {
     const message = err instanceof Error ? err.message : "提交失败";
-    uni.showToast({ title: message, icon: "none" });
+    toast.error(message);
   } finally {
     submitting.value = false;
   }
 }
 
-function previewResult(task: Creation) {
-  if (!task.resultUrl) return;
-  uni.previewImage({ urls: [task.resultUrl], current: task.resultUrl });
+function goDetail(task: Creation) {
+  uni.navigateTo({ url: `/pages/creation-detail/creation-detail?id=${task.id}` });
 }
 
 function saveResult(task: Creation) {
@@ -132,16 +165,16 @@ function saveResult(task: Creation) {
     url: task.resultUrl,
     success: (res) => {
       if (res.statusCode !== 200) {
-        uni.showToast({ title: "下载失败", icon: "none" });
+        toast.error("下载失败");
         return;
       }
       uni.saveImageToPhotosAlbum({
         filePath: res.tempFilePath,
-        success: () => uni.showToast({ title: "已保存到相册", icon: "success" }),
-        fail: (err) => uni.showToast({ title: err.errMsg ?? "保存失败", icon: "none" }),
+        success: () => toast.success("已保存到相册"),
+        fail: (err) => toast.error(err.errMsg ?? "保存失败"),
       });
     },
-    fail: (err) => uni.showToast({ title: err.errMsg ?? "下载失败", icon: "none" }),
+    fail: (err) => toast.error(err.errMsg ?? "下载失败"),
   });
   // #endif
 }
@@ -151,7 +184,15 @@ function goHistory() {
 }
 
 onShow(() => {
-  if (userStore.isLoggedIn) loadHistory();
+  loadPresets();
+  if (userStore.isLoggedIn) {
+    loadHistory();
+  } else {
+    // 未登录清空残留，避免从登录态切回显示旧数据
+    tasks.value = [];
+    for (const timer of pollTimers.values()) clearInterval(timer);
+    pollTimers.clear();
+  }
 });
 
 onUnmounted(() => {
@@ -182,24 +223,27 @@ onUnmounted(() => {
     </view>
 
     <view class="card">
-      <view class="card-title">提示词</view>
-      <textarea
-        v-model="prompt"
-        class="textarea"
-        placeholder="用一句话描述你想生成的画面，例如：生成狗狗趴在草地上的近景画面"
-        :maxlength="PROMPT_MAX"
+      <view class="card-title">风格</view>
+      <wd-cell
+        :title="selectedPreset ? selectedPreset.title : '请选择风格'"
+        :label="selectedPreset?.content"
+        is-link
+        clickable
+        @click="openPicker"
       />
-      <view class="counter">{{ promptLen }} / {{ PROMPT_MAX }}</view>
     </view>
 
-    <button
-      class="primary"
+    <wd-button
+      type="primary"
+      block
+      size="large"
       :loading="submitting"
       :disabled="!canSubmit"
+      custom-class="submit-btn"
       @click="handleSubmit"
     >
       {{ submitting ? "提交中..." : "开始生成" }}
-    </button>
+    </wd-button>
 
     <view v-if="tasks.length" class="tasks">
       <view class="tasks-title">最近任务</view>
@@ -208,30 +252,31 @@ onUnmounted(() => {
         :key="task.id"
         class="task"
         :class="`task--${task.status}`"
+        @click="goDetail(task)"
       >
         <image
           v-if="task.status === 'success' && task.resultUrl"
           class="task-image"
           :src="task.resultUrl"
           mode="aspectFill"
-          @click="previewResult(task)"
         />
         <view v-else class="task-image task-image--placeholder">
-          <text v-if="task.status === 'pending'" class="task-hint">生成中…</text>
-          <text v-else class="task-hint task-hint--error">生成失败</text>
+          <wd-tag v-if="task.status === 'pending'" type="primary" plain>生成中</wd-tag>
+          <wd-tag v-else type="danger" plain>生成失败</wd-tag>
         </view>
         <view class="task-body">
           <view class="task-prompt">{{ task.prompt }}</view>
           <view class="task-meta">
             <text class="task-time">{{ task.createdAt.slice(0, 16).replace("T", " ") }}</text>
-            <button
+            <wd-button
               v-if="task.status === 'success'"
-              class="task-save"
-              size="mini"
+              size="small"
+              plain
+              type="primary"
               @click.stop="saveResult(task)"
             >
               保存
-            </button>
+            </wd-button>
           </view>
         </view>
       </view>
@@ -240,6 +285,43 @@ onUnmounted(() => {
     <view class="history-entry" @click="goHistory">
       <text>查看全部历史 ›</text>
     </view>
+
+    <wd-popup
+      v-model="pickerOpen"
+      position="bottom"
+      :safe-area-inset-bottom="true"
+      custom-style="border-radius: 24rpx 24rpx 0 0; max-height: 80vh; display: flex; flex-direction: column;"
+      @close="closePicker"
+    >
+      <view class="picker-header">
+        <text class="picker-title">选择风格</text>
+        <wd-icon name="close" size="18px" custom-class="picker-close" @click="closePicker" />
+      </view>
+      <scroll-view scroll-y class="picker-list">
+        <view
+          v-for="preset in presets"
+          :key="preset.id"
+          class="preset"
+          :class="{ 'preset--active': preset.id === selectedPromptId }"
+          @click="selectPreset(preset.id)"
+        >
+          <image
+            v-if="preset.cover"
+            class="preset-cover"
+            :src="preset.cover"
+            mode="aspectFill"
+          />
+          <view class="preset-body">
+            <view class="preset-title">{{ preset.title }}</view>
+            <view class="preset-content">{{ preset.content }}</view>
+          </view>
+        </view>
+      </scroll-view>
+    </wd-popup>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 
@@ -306,37 +388,83 @@ onUnmounted(() => {
   font-size: 26rpx;
 }
 
-.textarea {
-  width: 100%;
-  min-height: 220rpx;
-  padding: 16rpx;
-  box-sizing: border-box;
-  border-radius: 12rpx;
-  background: #f8fafc;
-  font-size: 28rpx;
-  color: #1f2937;
-}
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx 16rpx;
+  border-bottom: 1rpx solid #f1f5f9;
 
-.counter {
-  margin-top: 8rpx;
-  text-align: right;
-  font-size: 22rpx;
-  color: #94a3b8;
-}
-
-.primary {
-  background: #3b82f6;
-  color: #ffffff;
-  font-size: 30rpx;
-  border-radius: 12rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  margin-top: 16rpx;
-
-  &[disabled] {
-    background: #cbd5e1;
-    color: #ffffff;
+  .picker-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #1f2937;
   }
+}
+
+.picker-close {
+  color: #94a3b8;
+  padding: 8rpx 16rpx;
+}
+
+.picker-list {
+  flex: 1;
+  padding: 16rpx 32rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.preset {
+  display: flex;
+  gap: 20rpx;
+  padding: 16rpx;
+  background: #f8fafc;
+  border: 2rpx solid transparent;
+  border-radius: 12rpx;
+  transition: border-color 0.15s;
+
+  &--active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+  }
+}
+
+.preset-cover {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 10rpx;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+.preset-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.preset-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8rpx;
+}
+
+.preset-content {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:deep(.submit-btn) {
+  margin-top: 16rpx;
 }
 
 .tasks {
@@ -381,15 +509,6 @@ onUnmounted(() => {
   }
 }
 
-.task-hint {
-  font-size: 24rpx;
-  color: #3b82f6;
-
-  &--error {
-    color: #ef4444;
-  }
-}
-
 .task-body {
   flex: 1;
   display: flex;
@@ -417,15 +536,6 @@ onUnmounted(() => {
   .task-time {
     font-size: 22rpx;
     color: #94a3b8;
-  }
-
-  .task-save {
-    background: #ffffff;
-    color: #3b82f6;
-    border: 1rpx solid #3b82f6;
-    font-size: 22rpx;
-    padding: 0 20rpx;
-    line-height: 50rpx;
   }
 }
 

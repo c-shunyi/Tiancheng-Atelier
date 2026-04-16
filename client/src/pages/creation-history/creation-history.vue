@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { onShow } from "@dcloudio/uni-app";
+import { useDialog, useToast } from "@wot-ui/ui";
 import { deleteCreation, listCreations } from "@/api/creation";
 import { useUserStore } from "@/store/user";
 import type { Creation } from "@/types/api";
 
 const PAGE_SIZE = 20;
+
+const toast = useToast();
+const dialog = useDialog();
 
 const userStore = useUserStore();
 const list = ref<Creation[]>([]);
@@ -25,7 +29,7 @@ function resetAndLoad() {
 async function loadMore() {
   if (loading.value || finished.value) return;
   if (!userStore.isLoggedIn) {
-    uni.showToast({ title: "请先登录", icon: "none" });
+    toast.show("请先登录");
     return;
   }
   loading.value = true;
@@ -36,8 +40,7 @@ async function loadMore() {
     finished.value = list.value.length >= data.total;
     if (!finished.value) page.value += 1;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "加载失败";
-    uni.showToast({ title: message, icon: "none" });
+    toast.error(err instanceof Error ? err.message : "加载失败");
   } finally {
     loading.value = false;
   }
@@ -47,29 +50,28 @@ onShow(() => {
   resetAndLoad();
 });
 
-function previewResult(item: Creation) {
-  if (!item.resultUrl) return;
-  uni.previewImage({ urls: [item.resultUrl], current: item.resultUrl });
+function goDetail(item: Creation) {
+  uni.navigateTo({ url: `/pages/creation-detail/creation-detail?id=${item.id}` });
 }
 
-function confirmDelete(item: Creation) {
-  uni.showModal({
-    title: "删除创作",
-    content: "确定要删除这条记录吗？",
-    confirmColor: "#ef4444",
-    success: async (res) => {
-      if (!res.confirm) return;
-      try {
-        await deleteCreation(item.id);
-        list.value = list.value.filter((c) => c.id !== item.id);
-        total.value = Math.max(0, total.value - 1);
-        uni.showToast({ title: "已删除", icon: "success" });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "删除失败";
-        uni.showToast({ title: message, icon: "none" });
-      }
-    },
-  });
+async function confirmDelete(item: Creation) {
+  try {
+    await dialog.confirm({
+      title: "删除创作",
+      msg: "确定要删除这条记录吗？",
+      confirmButtonText: "删除",
+    });
+  } catch {
+    return; // 用户取消
+  }
+  try {
+    await deleteCreation(item.id);
+    list.value = list.value.filter((c) => c.id !== item.id);
+    total.value = Math.max(0, total.value - 1);
+    toast.success("已删除");
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "删除失败");
+  }
 }
 </script>
 
@@ -84,7 +86,7 @@ function confirmDelete(item: Creation) {
         v-for="item in list"
         :key="item.id"
         class="item"
-        @click="previewResult(item)"
+        @click="goDetail(item)"
         @longpress="confirmDelete(item)"
       >
         <image
@@ -112,6 +114,10 @@ function confirmDelete(item: Creation) {
     >
       点击加载更多
     </view>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 

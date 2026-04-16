@@ -79,3 +79,14 @@ export interface CreationList {
   total: number;
   list: Creation[];
 }
+
+/**
+ * 提示词预设（用户从中选择）。
+ */
+export interface PromptPreset {
+  id: number;
+  title: string;
+  content: string;
+  cover: string;
+  sortOrder: number;
+}

@@ -8,8 +8,8 @@ import type { ApiResponse, Creation, CreationList } from "@/types/api";
 export function createCreation(params: {
   /** 本地参考图临时路径（uni.chooseImage 拿到的） */
   filePath: string;
-  /** 图像生成提示词 */
-  prompt: string;
+  /** 选中的提示词预设 id */
+  promptId: number;
 }): Promise<Creation> {
   const token = uni.getStorageSync(TOKEN_STORAGE_KEY);
   const header: Record<string, string> = {};
@@ -20,7 +20,7 @@ export function createCreation(params: {
       url: `${API_BASE_URL}/creations`,
       filePath: params.filePath,
       name: "file",
-      formData: { prompt: params.prompt },
+      formData: { promptId: String(params.promptId) },
       header,
       success: (res) => {
         try {

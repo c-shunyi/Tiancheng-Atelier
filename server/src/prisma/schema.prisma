@@ -70,6 +70,20 @@ enum CreationStatus {
   failed
 }
 
+model PromptPreset {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(64)
+  content   String   @db.Text
+  cover     String   @default("") @db.VarChar(512)
+  sortOrder Int      @default(0) @map("sort_order")
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([enabled, sortOrder])
+  @@map("prompt_presets")
+}
+
 model Creation {
   id             Int            @id @default(autoincrement())
   userId         Int            @map("user_id")

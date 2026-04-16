@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@wot-ui/ui':
+        specifier: ^1.0.0
+        version: 1.0.0
+
+packages:
+
+  '@wot-ui/ui@1.0.0':
+    resolution: {integrity: sha512-Ch6F6TCV1hnG0RZXiZNF3bue3OMyjLgnEkrSlPfIgQlO4nm1EFgBOkjhOqGOMYiNZduXT/Moe4q7M22wR1iXLA==}
+
+snapshots:
+
+  '@wot-ui/ui@1.0.0': {}

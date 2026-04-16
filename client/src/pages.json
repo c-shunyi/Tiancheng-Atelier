@@ -31,6 +31,12 @@
       }
     },
     {
+      "path": "pages/creation-detail/creation-detail",
+      "style": {
+        "navigationBarTitleText": "创作详情"
+      }
+    },
+    {
       "path": "pages/user/user",
       "style": {
         "navigationBarTitleText": "我的"
@@ -52,7 +58,8 @@
   "easycom": {
     "autoscan": true,
     "custom": {
-      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+      "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+      "^wd-(.*)": "@wot-ui/ui/components/wd-$1/wd-$1.vue"
     }
   },
   "tabBar": {
@@ -70,8 +77,8 @@
       {
         "pagePath": "pages/creation/creation",
         "text": "创作",
-        "iconPath": "static/tabber/home.png",
-        "selectedIconPath": "static/tabber/home-active.png"
+        "iconPath": "static/tabber/creation.png",
+        "selectedIconPath": "static/tabber/creation-active.png"
       },
       {
         "pagePath": "pages/user/user",

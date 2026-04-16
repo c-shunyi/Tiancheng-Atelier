@@ -24,6 +24,10 @@ function goProfileEdit() {
   uni.navigateTo({ url: "/pages/profile-edit/profile-edit" });
 }
 
+function goCreationHistory() {
+  uni.navigateTo({ url: "/pages/creation-history/creation-history" });
+}
+
 function handleLogout() {
   userStore.logout();
   uni.showToast({ title: "已退出登录", icon: "success" });
@@ -56,6 +60,17 @@ function handleLogout() {
       <text class="arrow">›</text>
     </view>
 
+    <view v-if="userStore.isLoggedIn" class="menu">
+      <view
+        class="menu-item"
+        hover-class="menu-item--hover"
+        @click="goCreationHistory"
+      >
+        <text class="menu-label">我的创作</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
     <view v-if="userStore.isLoggedIn" class="card">
       <button class="danger" @click="handleLogout">退出登录</button>
     </view>
@@ -64,6 +79,10 @@ function handleLogout() {
       <text class="empty">未登录</text>
       <button class="primary" @click="goLogin">去登录</button>
     </view>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 

@@ -98,6 +98,10 @@ function goLogin() {
         <text class="link" @click="goLogin">去登录</text>
       </view>
     </view>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 

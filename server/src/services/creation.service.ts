@@ -5,6 +5,7 @@ import config from "../config";
 import { prisma } from "../prisma/client";
 import { HttpError } from "../utils/http-error";
 import { logError } from "../utils/logger";
+import { getPromptPresetById } from "./prompt.service";
 import { storage } from "./storage";
 
 /**
@@ -204,16 +205,17 @@ const processCreationJob = async (params: {
 export const createCreation = async (params: {
   userId: number;
   file: Express.Multer.File;
-  prompt: string;
+  promptId: number;
 }) => {
-  const { userId, file, prompt } = params;
+  const { userId, file, promptId } = params;
 
-  const trimmedPrompt = prompt.trim();
+  const preset = await getPromptPresetById(promptId);
+  const trimmedPrompt = preset.content.trim();
   if (!trimmedPrompt) {
-    throw new HttpError(400, "提示词不能为空", 400);
+    throw new HttpError(500, "提示词预设内容为空", 500);
   }
   if (trimmedPrompt.length > PROMPT_MAX_LENGTH) {
-    throw new HttpError(400, `提示词不能超过 ${PROMPT_MAX_LENGTH} 字`, 400);
+    throw new HttpError(500, `提示词预设过长（> ${PROMPT_MAX_LENGTH}）`, 500);
   }
 
   const ext = path.extname(file.originalname).slice(1).toLowerCase();

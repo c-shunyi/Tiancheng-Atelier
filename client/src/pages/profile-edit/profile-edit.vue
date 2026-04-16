@@ -162,6 +162,10 @@ async function handleSave() {
     >
       {{ saving ? "保存中..." : "保存" }}
     </button>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 

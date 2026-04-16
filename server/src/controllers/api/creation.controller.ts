@@ -38,12 +38,15 @@ export const createCreation = async (
       throw new HttpError(400, "缺少上传文件", 400);
     }
 
-    const prompt = String(request.body.prompt ?? "");
+    const promptId = Number(request.body.promptId);
+    if (!Number.isInteger(promptId) || promptId <= 0) {
+      throw new HttpError(400, "promptId 参数无效", 400);
+    }
 
     const data = await createCreationService({
       userId,
       file: request.file,
-      prompt,
+      promptId,
     });
 
     sendSuccess(response, data, "已提交");

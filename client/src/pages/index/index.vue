@@ -29,6 +29,10 @@ function goLogin() {
         <button class="primary" @click="goLogin">去登录</button>
       </template>
     </view>
+
+    <wd-toast />
+    <wd-dialog />
+    <wd-notify />
   </view>
 </template>
 
