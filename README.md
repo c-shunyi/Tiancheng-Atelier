@@ -1,13 +1,18 @@
 # Tiancheng-Atelier
 
-当前仓库已经新增 `client` 目录，用于承载基于 `uni-app x` 的微信小程序基础项目。
+| 目录 | 说明 |
+| --- | --- |
+| [client/](./client) | 客户端：uni-app + Vue3 + Vite + TypeScript（H5 / 微信小程序 / App） |
+| [server/](./server) | 服务端：Express + TypeScript + Prisma |
 
-快速开始：
+## 快速开始
 
 ```bash
-cd client
-pnpm install
-pnpm dev:mp-weixin
+# 客户端
+cd client && pnpm install && pnpm dev:h5
+
+# 服务端
+cd server && pnpm install && pnpm dev
 ```
 
-更详细的项目说明见 [client/README.md](./client/README.md)。
+各子项目使用说明详见各自的 README。
