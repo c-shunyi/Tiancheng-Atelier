@@ -352,6 +352,7 @@ onUnmounted(() => {
               <view class="card-title">风格</view>
               <wd-cell
                 :title="selectedPreset ? selectedPreset.title : '请选择风格'"
+                :label="selectedPreset?.description"
                 is-link
                 clickable
                 @click="openPicker"
@@ -403,6 +404,9 @@ onUnmounted(() => {
               />
               <view class="preset-body">
                 <view class="preset-title">{{ preset.title }}</view>
+                <view v-if="preset.description" class="preset-desc">
+                  {{ preset.description }}
+                </view>
               </view>
             </view>
           </scroll-view>
@@ -751,9 +755,6 @@ onUnmounted(() => {
   box-sizing: border-box;
   background: var(--bg-card);
   overflow: hidden;
-  /* #ifdef H5 */
-  padding-bottom: 70px; /* 让位 H5 自定义 tabBar */
-  /* #endif */
 }
 
 .picker-header {
@@ -835,7 +836,7 @@ onUnmounted(() => {
   letter-spacing: 0.2rpx;
 }
 
-.preset-content {
+.preset-desc {
   font-size: 24rpx;
   color: var(--text-secondary);
   line-height: 1.5;

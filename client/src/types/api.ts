@@ -93,11 +93,13 @@ export interface CreationList {
 
 /**
  * 提示词预设（用户从中选择）。
+ * 真实的 prompt（content）不对外下发，前端只拿到 description 作为介绍文案。
  */
 export interface PromptPreset {
   id: number;
   title: string;
-  content: string;
+  /** 给用户看的风格介绍 */
+  description: string;
   cover: string;
   sortOrder: number;
 }
