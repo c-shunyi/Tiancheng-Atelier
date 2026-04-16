@@ -6,14 +6,25 @@ import { HttpError } from "../utils/http-error";
 /** 每日免费创作次数上限。 */
 export const DAILY_FREE_LIMIT = 10;
 
+/** 北京时间相对 UTC 的偏移毫秒（UTC+8，固定，无夏令时）。 */
+const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
+
 /**
- * 计算"下一次重置时间"：当前时间所在自然日的次日 00:00（本地时区）。
+ * 计算"下一次重置时间"：北京时间次日 00:00。
+ * 不依赖服务器系统时区，在任何部署环境下都稳定。
  */
 const nextResetAt = (from: Date): Date => {
-  const d = new Date(from);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 1);
-  return d;
+  const shifted = new Date(from.getTime() + BEIJING_OFFSET_MS);
+  const nextMidnightUtcMs = Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate() + 1,
+    0,
+    0,
+    0,
+    0,
+  );
+  return new Date(nextMidnightUtcMs - BEIJING_OFFSET_MS);
 };
 
 /**

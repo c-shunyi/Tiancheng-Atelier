@@ -104,3 +104,20 @@ model Creation {
   @@index([userId, createdAt])
   @@map("creations")
 }
+
+model Address {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  name       String   @db.VarChar(32)
+  phone      String   @db.VarChar(20)
+  province   String   @db.VarChar(32)
+  city       String   @db.VarChar(32)
+  district   String   @db.VarChar(32)
+  detail     String   @db.VarChar(255)
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, isDefault, createdAt])
+  @@map("addresses")
+}
