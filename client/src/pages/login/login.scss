@@ -1,0 +1,30 @@
+.page {
+  padding: 64rpx 32rpx;
+}
+
+.card {
+  padding: 48rpx 40rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+
+  .title {
+    display: block;
+    font-size: 40rpx;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .desc {
+    display: block;
+    margin: 16rpx 0 48rpx;
+    font-size: 26rpx;
+    color: #888;
+  }
+
+  .primary {
+    background: #07c160;
+    color: #fff;
+    border-radius: 12rpx;
+  }
+}
