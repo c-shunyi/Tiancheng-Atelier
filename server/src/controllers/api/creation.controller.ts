@@ -5,6 +5,7 @@ import {
   deleteCreation as deleteCreationService,
   getCreation as getCreationService,
   listMyCreations,
+  retryCreation as retryCreationService,
 } from "../../services/creation.service";
 import { HttpError } from "../../utils/http-error";
 import { sendSuccess } from "../../utils/response";
@@ -93,6 +94,29 @@ export const listCreations = async (
 
     const data = await listMyCreations({ userId, page, pageSize });
     sendSuccess(response, data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 重试失败记录：path `:id`，不需要再次上传文件。
+ */
+export const retryCreation = async (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = readCurrentUserId(request);
+    const id = Number(request.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new HttpError(400, "id 参数无效", 400);
+    }
+
+    const data = await retryCreationService({ userId, id });
+    sendSuccess(response, data, "已重新提交");
   } catch (error) {
     next(error);
   }

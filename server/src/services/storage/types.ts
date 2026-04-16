@@ -31,6 +31,11 @@ export interface StorageProvider {
   delete(key: string): Promise<void>;
 
   /**
+   * 根据 key 读取原始字节，供后端内部需要二次处理时使用（如失败重试）。
+   */
+  get(key: string): Promise<{ buffer: Buffer; mimeType: string }>;
+
+  /**
    * 根据 key 计算对外可访问的完整 URL。
    * 不做存在性检查，仅做 URL 拼接。
    */

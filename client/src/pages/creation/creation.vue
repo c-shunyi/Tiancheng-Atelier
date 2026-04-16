@@ -2,7 +2,12 @@
 import { computed, onUnmounted, ref, watch } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { useToast } from "@wot-ui/ui";
-import { createCreation, getCreation, listCreations } from "@/api/creation";
+import {
+  createCreation,
+  getCreation,
+  listCreations,
+  retryCreation,
+} from "@/api/creation";
 import { listPromptPresets } from "@/api/prompt";
 import { getProfile } from "@/api/user";
 import { useUserStore } from "@/store/user";
@@ -201,6 +206,30 @@ function saveResult(task: Creation) {
   // #endif
 }
 
+const retrying = ref(new Set<number>());
+
+async function handleRetry(task: Creation) {
+  if (retrying.value.has(task.id)) return;
+  retrying.value.add(task.id);
+  try {
+    const updated = await retryCreation(task.id);
+    const index = tasks.value.findIndex((t) => t.id === task.id);
+    if (index !== -1) tasks.value[index] = updated;
+    startPolling(updated.id);
+    try {
+      const profile = await getProfile();
+      userStore.setUser(profile);
+    } catch {
+      /* 刷新失败不影响本次重试提示 */
+    }
+    toast.success("已重新提交");
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "重试失败");
+  } finally {
+    retrying.value.delete(task.id);
+  }
+}
+
 async function refreshProfile() {
   if (!userStore.isLoggedIn) return;
   try {
@@ -262,11 +291,6 @@ onUnmounted(() => {
         </view>
       </view>
 
-      <view class="section-head">
-        <text class="section-title">我的创作</text>
-        <text class="section-count" v-if="tasks.length">{{ tasks.length }}</text>
-      </view>
-
       <view v-if="tasks.length === 0" class="empty">
         <text class="empty-title">还没有创作</text>
         <text class="empty-desc">点击右下角按钮开始你的第一次创作</text>
@@ -305,6 +329,14 @@ onUnmounted(() => {
               @click.stop="saveResult(task)"
             >
               <text>保存</text>
+            </view>
+            <view
+              v-else-if="task.status === 'failed'"
+              class="cell-retry"
+              :class="{ 'cell-retry--loading': retrying.has(task.id) }"
+              @click.stop="handleRetry(task)"
+            >
+              <text>{{ retrying.has(task.id) ? "重试中…" : "重试" }}</text>
             </view>
           </view>
         </view>
@@ -463,26 +495,6 @@ onUnmounted(() => {
   }
 }
 
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0 4rpx 20rpx;
-
-  .section-title {
-    font-size: 36rpx;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.3rpx;
-  }
-
-  .section-count {
-    font-size: 24rpx;
-    color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
-  }
-}
-
 .login-tip {
   margin-top: 180rpx;
   display: flex;
@@ -587,14 +599,27 @@ onUnmounted(() => {
     letter-spacing: 0.2rpx;
   }
 
-  .cell-save {
+  .cell-save,
+  .cell-retry {
     padding: 6rpx 16rpx;
     font-size: 22rpx;
     font-weight: 500;
-    background: rgba(255, 255, 255, 0.28);
     border-radius: var(--radius-pill);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+
+  .cell-save {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .cell-retry {
+    background: rgba(255, 255, 255, 0.28);
+    color: #fff;
+
+    &--loading {
+      opacity: 0.6;
+    }
   }
 }
 

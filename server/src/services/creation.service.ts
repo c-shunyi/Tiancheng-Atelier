@@ -302,6 +302,55 @@ export const listMyCreations = async (params: {
 };
 
 /**
+ * 失败记录重试：不上传新图，复用原 sourceImageKey + prompt，重新扣一次免费次数后
+ * 把记录状态置回 pending 并重新触发后台任务。
+ */
+export const retryCreation = async (params: { userId: number; id: number }) => {
+  const record = await prisma.creation.findUnique({ where: { id: params.id } });
+  if (!record || record.userId !== params.userId) {
+    throw new HttpError(404, "记录不存在", 404);
+  }
+  if (record.status !== "failed") {
+    throw new HttpError(400, "仅失败的创作可以重试", 400);
+  }
+  if (!record.sourceImageKey) {
+    throw new HttpError(400, "原始参考图已丢失，无法重试", 400);
+  }
+
+  ensureKeyOwnedBy(record.sourceImageKey, params.userId);
+  const { buffer, mimeType } = await storage.get(record.sourceImageKey);
+
+  // 事务内扣减免费次数并重置状态，避免并发重试超扣
+  const { updated, quota } = await prisma.$transaction(async (tx) => {
+    const quota = await consumeFreeQuota(tx, params.userId);
+    const updated = await tx.creation.update({
+      where: { id: record.id },
+      data: {
+        status: "pending",
+        errorMessage: null,
+        resultImageKey: "",
+      },
+    });
+    return { updated, quota };
+  });
+
+  // 旧结果图若存在，异步清理掉
+  if (record.resultImageKey) {
+    void storage.delete(record.resultImageKey).catch(() => undefined);
+  }
+
+  void processCreationJob({
+    creationId: updated.id,
+    userId: params.userId,
+    prompt: updated.prompt,
+    sourceBuffer: buffer,
+    sourceMimeType: mimeType,
+  });
+
+  return { ...toCreationDto(updated), quota };
+};
+
+/**
  * 删除一条创作记录及其两张图片。
  */
 export const deleteCreation = async (params: { userId: number; id: number }) => {

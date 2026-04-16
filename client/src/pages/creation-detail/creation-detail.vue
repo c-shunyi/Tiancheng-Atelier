@@ -2,7 +2,9 @@
 import { computed, onUnmounted, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { useDialog, useToast } from "@wot-ui/ui";
-import { deleteCreation, getCreation } from "@/api/creation";
+import { deleteCreation, getCreation, retryCreation } from "@/api/creation";
+import { getProfile } from "@/api/user";
+import { useUserStore } from "@/store/user";
 import type { Creation } from "@/types/api";
 
 const POLL_INTERVAL_MS = 2500;
@@ -10,9 +12,11 @@ const POLL_INTERVAL_MS = 2500;
 const toast = useToast();
 const dialog = useDialog();
 
+const userStore = useUserStore();
 const detail = ref<Creation | null>(null);
 const loading = ref(true);
 const errorMsg = ref("");
+const retrying = ref(false);
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 const statusLabel = computed(() => {
@@ -93,6 +97,27 @@ function saveResult() {
     fail: (err) => toast.error(err.errMsg ?? "下载失败"),
   });
   // #endif
+}
+
+async function handleRetry() {
+  if (!detail.value || retrying.value) return;
+  retrying.value = true;
+  try {
+    const updated = await retryCreation(detail.value.id);
+    detail.value = updated;
+    startPollingIfNeeded();
+    try {
+      const profile = await getProfile();
+      userStore.setUser(profile);
+    } catch {
+      /* 刷新失败不影响本次重试提示 */
+    }
+    toast.success("已重新提交");
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "重试失败");
+  } finally {
+    retrying.value = false;
+  }
 }
 
 async function confirmDelete() {
@@ -185,6 +210,17 @@ onUnmounted(() => {
           @click="saveResult"
         >
           保存到相册
+        </wd-button>
+        <wd-button
+          v-else-if="detail.status === 'failed'"
+          type="primary"
+          block
+          size="large"
+          :loading="retrying"
+          :disabled="retrying"
+          @click="handleRetry"
+        >
+          {{ retrying ? "重试中…" : "重新生成" }}
         </wd-button>
         <wd-button type="error" plain block size="large" @click="confirmDelete">
           删除

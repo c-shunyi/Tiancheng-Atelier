@@ -38,4 +38,20 @@ export class LocalStorageProvider implements StorageProvider {
     const fullPath = path.join(this.rootDir, key);
     await fs.rm(fullPath, { force: true });
   }
+
+  async get(key: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    const fullPath = path.join(this.rootDir, key);
+    const buffer = await fs.readFile(fullPath);
+    const ext = path.extname(key).slice(1).toLowerCase();
+    const mimeType = EXT_TO_MIME[ext] ?? "application/octet-stream";
+    return { buffer, mimeType };
+  }
 }
+
+const EXT_TO_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+};

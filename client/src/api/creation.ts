@@ -69,6 +69,16 @@ export function listCreations(params?: { page?: number; pageSize?: number }) {
 }
 
 /**
+ * 重试一条失败的创作记录（不用再上传图片，后端复用原参考图 + 提示词）。
+ */
+export function retryCreation(id: number) {
+  return request<Creation>({
+    url: `/creations/${id}/retry`,
+    method: "POST",
+  });
+}
+
+/**
  * 删除一条创作记录（同时清理两张图）。
  */
 export function deleteCreation(id: number) {
