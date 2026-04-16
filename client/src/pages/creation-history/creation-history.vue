@@ -121,9 +121,11 @@ async function confirmDelete(item: Creation) {
       </view>
     </view>
 
-    <view v-if="loading" class="hint">加载中…</view>
-    <view v-else-if="finished && list.length > 0" class="hint">已经到底啦</view>
-    <view v-else-if="!finished && list.length > 0" class="hint">上拉加载更多</view>
+    <view class="hint-wrap">
+      <view v-if="loading" class="hint">加载中…</view>
+      <view v-else-if="finished && list.length > 0" class="hint">已经到底啦</view>
+      <view v-else-if="!finished && list.length > 0" class="hint">上拉加载更多</view>
+    </view>
 
     <wd-toast />
     <wd-dialog />
@@ -206,14 +208,44 @@ async function confirmDelete(item: Creation) {
   }
 }
 
-.hint {
-  margin-top: 32rpx;
-  text-align: center;
-  color: var(--text-tertiary);
-  font-size: 24rpx;
+.hint-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 40rpx;
+}
 
-  &.link {
-    color: var(--accent);
+.hint {
+  position: relative;
+  padding: 14rpx 36rpx;
+  color: rgba(60, 60, 67, 0.78);
+  font-size: 24rpx;
+  letter-spacing: 0.6rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 0.38) 100%
+  );
+  backdrop-filter: blur(24rpx) saturate(180%);
+  -webkit-backdrop-filter: blur(24rpx) saturate(180%);
+  border: 1rpx solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 10rpx 28rpx -10rpx rgba(31, 38, 135, 0.22),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1rpx 0 rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      120% 80% at 20% 0%,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    pointer-events: none;
   }
 }
 </style>

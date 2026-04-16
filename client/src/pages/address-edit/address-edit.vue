@@ -8,6 +8,17 @@ import type { AddressInput } from "@/types/api";
 
 const toast = useToast();
 
+const regionColumns = pcaTextArr;
+
+function defaultRegion(): [string, string, string] {
+  const prov = regionColumns.find((p) => p.label === "北京市") ?? regionColumns[0];
+  const c = prov?.children?.[0];
+  const d = c?.children?.[0];
+  return [prov?.label ?? "", c?.label ?? "", d?.label ?? ""];
+}
+
+const [defP, defC, defD] = defaultRegion();
+
 const editingId = ref<number | null>(null);
 const name = ref("");
 const phone = ref("");
@@ -18,14 +29,12 @@ const detail = ref("");
 const isDefault = ref(false);
 const saving = ref(false);
 const pickerVisible = ref(false);
-const pickerValue = ref<string[]>([]);
+const pickerValue = ref<string[]>([defP, defC, defD]);
 
 const isEdit = computed(() => editingId.value !== null);
 const regionText = computed(() =>
   province.value ? `${province.value} ${city.value} ${district.value}` : "",
 );
-
-const regionColumns = pcaTextArr;
 
 async function loadExisting(id: number) {
   try {
