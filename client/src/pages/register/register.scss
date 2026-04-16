@@ -1,60 +1,81 @@
 .page {
-  padding: 64rpx 32rpx;
+  padding: 80rpx 28rpx 48rpx;
+  min-height: 100vh;
 }
 
 .card {
-  padding: 48rpx 40rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  padding: 56rpx 40rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-card-lg);
+  box-shadow: var(--shadow-card);
 
   .title {
     display: block;
-    font-size: 40rpx;
-    font-weight: 600;
-    color: #111;
+    font-size: 48rpx;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5rpx;
   }
 
   .desc {
     display: block;
-    margin: 16rpx 0 32rpx;
-    font-size: 26rpx;
-    color: #888;
+    margin: 16rpx 0 40rpx;
+    font-size: 28rpx;
+    color: var(--text-secondary);
+    line-height: 1.5;
   }
 
   .input {
-    height: 88rpx;
-    padding: 0 24rpx;
-    margin-bottom: 24rpx;
-    background: #f5f6f8;
-    border-radius: 12rpx;
-    font-size: 28rpx;
+    height: 96rpx;
+    padding: 0 28rpx;
+    margin-bottom: 20rpx;
+    background: var(--bg-tint);
+    border-radius: 14rpx;
+    font-size: 30rpx;
+    color: var(--text-primary);
   }
 
   .tip {
     display: block;
     margin: -8rpx 0 24rpx;
-    font-size: 22rpx;
-    color: #999;
+    padding-left: 12rpx;
+    font-size: 24rpx;
+    color: var(--text-tertiary);
   }
 
   .primary {
-    margin-top: 16rpx;
-    background: #3b82f6;
+    margin-top: 24rpx;
+    background: var(--accent);
     color: #fff;
-    border-radius: 12rpx;
+    border-radius: var(--radius-button);
+    height: 96rpx;
+    line-height: 96rpx;
+    font-size: 32rpx;
+    font-weight: 600;
+    letter-spacing: 0.5rpx;
+    border: none;
+    transition: opacity 0.15s ease;
+
+    &::after {
+      border: none;
+    }
+
+    &:active {
+      opacity: 0.72;
+    }
   }
 
   .footer {
     display: flex;
     justify-content: center;
-    margin-top: 32rpx;
+    margin-top: 40rpx;
     font-size: 26rpx;
-    color: #666;
+    color: var(--text-secondary);
 
     .link {
-      color: #3b82f6;
+      color: var(--accent);
       margin-left: 8rpx;
+      font-weight: 500;
     }
   }
 }

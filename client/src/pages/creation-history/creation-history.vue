@@ -123,8 +123,7 @@ async function confirmDelete(item: Creation) {
 
 <style lang="scss" scoped>
 .page {
-  padding: 24rpx 32rpx 64rpx;
-  background: #f5f6f8;
+  padding: 24rpx 28rpx 64rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -132,36 +131,41 @@ async function confirmDelete(item: Creation) {
 .empty {
   margin-top: 200rpx;
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   font-size: 28rpx;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 .item {
   display: flex;
   gap: 20rpx;
   padding: 20rpx;
-  background: #ffffff;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.99);
+  }
 
   .thumb {
     width: 180rpx;
     height: 180rpx;
-    border-radius: 12rpx;
-    background: #f1f5f9;
+    border-radius: 16rpx;
+    background: var(--bg-tint);
     flex-shrink: 0;
 
     &.placeholder {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #94a3b8;
+      color: var(--text-tertiary);
       font-size: 24rpx;
     }
   }
@@ -175,7 +179,7 @@ async function confirmDelete(item: Creation) {
 
     .prompt {
       font-size: 28rpx;
-      color: #1f2937;
+      color: var(--text-primary);
       line-height: 1.5;
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -185,8 +189,9 @@ async function confirmDelete(item: Creation) {
 
     .meta {
       font-size: 22rpx;
-      color: #94a3b8;
+      color: var(--text-tertiary);
       margin-top: 8rpx;
+      font-variant-numeric: tabular-nums;
     }
   }
 }
@@ -194,11 +199,11 @@ async function confirmDelete(item: Creation) {
 .hint {
   margin-top: 32rpx;
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   font-size: 24rpx;
 
   &.link {
-    color: #3b82f6;
+    color: var(--accent);
   }
 }
 </style>

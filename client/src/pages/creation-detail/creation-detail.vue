@@ -200,8 +200,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .page {
-  padding: 24rpx 32rpx 64rpx;
-  background: #f5f6f8;
+  padding: 24rpx 28rpx 64rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -209,26 +208,28 @@ onUnmounted(() => {
 .hint {
   margin-top: 120rpx;
   text-align: center;
-  color: #94a3b8;
+  color: var(--text-tertiary);
   font-size: 28rpx;
 
   &.error {
-    color: #ef4444;
+    color: var(--danger);
   }
 }
 
 .card {
-  background: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: 28rpx 24rpx 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-card);
 
   .card-title {
     font-size: 28rpx;
     font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 16rpx;
+    color: var(--text-primary);
+    margin-bottom: 20rpx;
+    padding-left: 4rpx;
+    letter-spacing: 0.2rpx;
   }
 }
 
@@ -236,49 +237,51 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 
   .time {
     font-size: 24rpx;
-    color: #94a3b8;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .result-image {
   width: 100%;
-  border-radius: 12rpx;
-  background: #f1f5f9;
+  border-radius: 20rpx;
+  background: var(--bg-tint);
 }
 
 .result-placeholder {
   width: 100%;
   height: 400rpx;
-  border-radius: 12rpx;
-  background: #f1f5f9;
+  border-radius: 20rpx;
+  background: var(--bg-tint);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26rpx;
-  color: #3b82f6;
+  color: var(--accent);
 
   &--failed {
-    color: #ef4444;
+    color: var(--danger);
   }
 }
 
 .prompt {
   display: block;
   font-size: 28rpx;
-  color: #1f2937;
+  color: var(--text-primary);
   line-height: 1.6;
   white-space: pre-wrap;
+  padding: 0 4rpx;
 }
 
 .source-image {
   width: 240rpx;
   height: 240rpx;
-  border-radius: 12rpx;
-  background: #f1f5f9;
+  border-radius: 20rpx;
+  background: var(--bg-tint);
 }
 
 .actions {
@@ -287,5 +290,4 @@ onUnmounted(() => {
   gap: 16rpx;
   margin-top: 8rpx;
 }
-
 </style>

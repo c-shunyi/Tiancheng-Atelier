@@ -1,5 +1,14 @@
 .page {
-  padding: 24rpx 32rpx;
+  padding: 32rpx 28rpx 48rpx;
+  min-height: 100vh;
+}
+
+.section {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 24rpx;
+  overflow: hidden;
 }
 
 .avatar-row,
@@ -7,21 +16,47 @@
   display: flex;
   align-items: center;
   padding: 28rpx 28rpx;
+  background: var(--bg-card);
+  position: relative;
+
+  &:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 28rpx;
+    right: 0;
+    bottom: 0;
+    height: 1rpx;
+    background: var(--separator);
+    transform: scaleY(0.5);
+  }
+}
+
+/* 如果未使用 .section 包裹，保持原有独立卡片样式 */
+.avatar-row:not(.section .avatar-row),
+.field:not(.section .field) {
   margin-bottom: 16rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+
+  &::after {
+    display: none;
+  }
 }
 
 .label {
-  width: 140rpx;
-  font-size: 28rpx;
-  color: #333;
+  width: 150rpx;
+  font-size: 30rpx;
+  color: var(--text-primary);
   flex-shrink: 0;
 }
 
 .avatar-row {
   justify-content: space-between;
+  transition: background-color 0.15s ease;
+
+  &:active {
+    background: #f7f7f9;
+  }
 
   .avatar-wrap {
     display: flex;
@@ -29,34 +64,51 @@
   }
 
   .avatar {
-    width: 96rpx;
-    height: 96rpx;
+    width: 104rpx;
+    height: 104rpx;
     border-radius: 50%;
+    background: linear-gradient(135deg, #e5e5ea 0%, #d1d1d6 100%);
 
     &.placeholder {
-      background: #e5e7eb;
+      background: linear-gradient(135deg, #e5e5ea 0%, #d1d1d6 100%);
     }
   }
 
   .arrow {
     margin-left: 16rpx;
     font-size: 36rpx;
-    color: #c8c9cc;
+    color: var(--text-tertiary);
+    line-height: 1;
   }
 }
 
 .field {
   .input {
     flex: 1;
-    font-size: 28rpx;
-    color: #111;
+    font-size: 30rpx;
+    color: var(--text-primary);
     text-align: right;
   }
 }
 
 .primary {
   margin-top: 48rpx;
-  background: #3b82f6;
+  background: var(--accent);
   color: #fff;
-  border-radius: 12rpx;
+  border-radius: var(--radius-button);
+  height: 96rpx;
+  line-height: 96rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  border: none;
+  transition: opacity 0.15s ease;
+
+  &::after {
+    border: none;
+  }
+
+  &:active {
+    opacity: 0.72;
+  }
 }

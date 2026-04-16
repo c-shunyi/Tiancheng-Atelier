@@ -47,6 +47,18 @@
       "style": {
         "navigationBarTitleText": "编辑个人信息"
       }
+    },
+    {
+      "path": "pages/address/address",
+      "style": {
+        "navigationBarTitleText": "收货地址"
+      }
+    },
+    {
+      "path": "pages/address-edit/address-edit",
+      "style": {
+        "navigationBarTitleText": "编辑地址"
+      }
     }
   ],
   "globalStyle": {

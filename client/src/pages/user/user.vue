@@ -28,6 +28,10 @@ function goCreationHistory() {
   uni.navigateTo({ url: "/pages/creation-history/creation-history" });
 }
 
+function goAddress() {
+  uni.navigateTo({ url: "/pages/address/address" });
+}
+
 function handleLogout() {
   userStore.logout();
   uni.showToast({ title: "已退出登录", icon: "success" });
@@ -67,6 +71,14 @@ function handleLogout() {
         @click="goCreationHistory"
       >
         <text class="menu-label">我的创作</text>
+        <text class="arrow">›</text>
+      </view>
+      <view
+        class="menu-item"
+        hover-class="menu-item--hover"
+        @click="goAddress"
+      >
+        <text class="menu-label">收货地址</text>
         <text class="arrow">›</text>
       </view>
     </view>

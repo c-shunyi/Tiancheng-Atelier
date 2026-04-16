@@ -101,3 +101,32 @@ export interface PromptPreset {
   cover: string;
   sortOrder: number;
 }
+
+/**
+ * 收货地址。
+ */
+export interface Address {
+  id: number;
+  name: string;
+  phone: string;
+  province: string;
+  city: string;
+  district: string;
+  detail: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 新增/更新地址的请求体。
+ */
+export interface AddressInput {
+  name: string;
+  phone: string;
+  province: string;
+  city: string;
+  district: string;
+  detail: string;
+  isDefault?: boolean;
+}
