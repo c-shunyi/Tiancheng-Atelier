@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 import {
   createCreation as createCreationService,
   deleteCreation as deleteCreationService,
+  getCreation as getCreationService,
   listMyCreations,
 } from "../../services/creation.service";
 import { HttpError } from "../../utils/http-error";
@@ -23,6 +24,7 @@ const readCurrentUserId = (request: Request): number => {
 
 /**
  * 发起一次图生图：multipart/form-data，字段 `file` + `prompt`。
+ * 立即返回 pending 记录，后台异步调 DMX；前端自行轮询状态。
  */
 export const createCreation = async (
   request: Request,
@@ -44,7 +46,30 @@ export const createCreation = async (
       prompt,
     });
 
-    sendSuccess(response, data, "生成成功");
+    sendSuccess(response, data, "已提交");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 查询单条创作记录（前端轮询用）。
+ */
+export const getCreation = async (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = readCurrentUserId(request);
+    const id = Number(request.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new HttpError(400, "id 参数无效", 400);
+    }
+
+    const data = await getCreationService({ userId, id });
+    sendSuccess(response, data);
   } catch (error) {
     next(error);
   }

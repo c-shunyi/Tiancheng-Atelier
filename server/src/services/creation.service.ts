@@ -149,7 +149,57 @@ const ensureKeyOwnedBy = (key: string, userId: number) => {
 };
 
 /**
- * 创建一次图生图任务：保存原图 → 调 DMX → 下载结果 → 存本地 → 写 DB。
+ * 后台任务：调 DMX → 下载结果 → 更新 DB。
+ *
+ * 不要对返回值 await（fire-and-forget）。所有异常在内部兜底写入 DB 的 failed 状态，
+ * 不会把错误冒泡到调用方。
+ */
+const processCreationJob = async (params: {
+  creationId: number;
+  userId: number;
+  prompt: string;
+  sourceBuffer: Buffer;
+  sourceMimeType: string;
+}): Promise<void> => {
+  const { creationId, userId, prompt, sourceBuffer, sourceMimeType } = params;
+
+  try {
+    const resultImageUrl = await callDmxImageApi({
+      prompt,
+      sourceImage: { buffer: sourceBuffer, mimeType: sourceMimeType },
+    });
+
+    const { buffer, mimeType } = await downloadImageBuffer(resultImageUrl);
+    const resultExt = guessResultExt(mimeType, resultImageUrl);
+    const resultKey = `users/${userId}/creation/result/${randomUUID()}.${resultExt}`;
+    await storage.put(resultKey, buffer, mimeType);
+
+    await prisma.creation.update({
+      where: { id: creationId },
+      data: {
+        resultImageKey: resultKey,
+        status: "success",
+        errorMessage: null,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "未知错误";
+    logError("创作任务失败", { creationId, message });
+    await prisma.creation
+      .update({
+        where: { id: creationId },
+        data: { status: "failed", errorMessage: message.slice(0, 500) },
+      })
+      .catch(() => undefined);
+  }
+};
+
+/**
+ * 创建一次图生图任务（异步）：
+ * - 同步部分：校验 → 保存原图 → 插入 pending 记录
+ * - 异步部分：后台调 DMX，完成后更新记录
+ *
+ * 立即返回 pending 记录，前端通过轮询 `getCreation` 拿最终状态。
  */
 export const createCreation = async (params: {
   userId: number;
@@ -191,37 +241,27 @@ export const createCreation = async (params: {
     },
   });
 
-  try {
-    const resultImageUrl = await callDmxImageApi({
-      prompt: trimmedPrompt,
-      sourceImage: { buffer: file.buffer, mimeType: file.mimetype },
-    });
+  // 触发后台处理，调用方不等待
+  void processCreationJob({
+    creationId: record.id,
+    userId,
+    prompt: trimmedPrompt,
+    sourceBuffer: file.buffer,
+    sourceMimeType: file.mimetype,
+  });
 
-    const { buffer, mimeType } = await downloadImageBuffer(resultImageUrl);
-    const resultExt = guessResultExt(mimeType, resultImageUrl);
-    const resultKey = `users/${userId}/creation/result/${randomUUID()}.${resultExt}`;
-    await storage.put(resultKey, buffer, mimeType);
+  return toCreationDto(record);
+};
 
-    const updated = await prisma.creation.update({
-      where: { id: record.id },
-      data: {
-        resultImageKey: resultKey,
-        status: "success",
-        errorMessage: null,
-      },
-    });
-
-    return toCreationDto(updated);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "未知错误";
-    await prisma.creation
-      .update({
-        where: { id: record.id },
-        data: { status: "failed", errorMessage: message.slice(0, 500) },
-      })
-      .catch(() => undefined);
-    throw error;
+/**
+ * 获取单条创作记录（用于前端轮询状态）。
+ */
+export const getCreation = async (params: { userId: number; id: number }) => {
+  const record = await prisma.creation.findUnique({ where: { id: params.id } });
+  if (!record || record.userId !== params.userId) {
+    throw new HttpError(404, "记录不存在", 404);
   }
+  return toCreationDto(record);
 };
 
 /**

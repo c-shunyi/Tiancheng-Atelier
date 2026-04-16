@@ -45,6 +45,16 @@ export function createCreation(params: {
 }
 
 /**
+ * 查询单条创作记录（用于轮询 pending 任务状态）。
+ */
+export function getCreation(id: number) {
+  return request<Creation>({
+    url: `/creations/${id}`,
+    method: "GET",
+  });
+}
+
+/**
  * 获取当前用户的创作历史分页列表。
  */
 export function listCreations(params?: { page?: number; pageSize?: number }) {
