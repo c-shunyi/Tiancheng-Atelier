@@ -8,6 +8,7 @@ import {
   listCreations,
   retryCreation,
 } from "@/api/creation";
+import { ApiError } from "@/api/request";
 import { listPromptPresets } from "@/api/prompt";
 import { getProfile } from "@/api/user";
 import { useUserStore } from "@/store/user";
@@ -82,8 +83,12 @@ function startPolling(id: number) {
       const index = tasks.value.findIndex((t) => t.id === id);
       if (index !== -1) tasks.value[index] = latest;
       if (latest.status !== "pending") stopPolling(id);
-    } catch {
-      // 网络抖动不终止轮询，下个 tick 再试
+    } catch (err) {
+      // 记录被删除则终止轮询；其余错误当作网络抖动下次重试
+      if (err instanceof ApiError && err.code === 404) {
+        stopPolling(id);
+        tasks.value = tasks.value.filter((t) => t.id !== id);
+      }
     }
   }, POLL_INTERVAL_MS);
   pollTimers.set(id, timer);

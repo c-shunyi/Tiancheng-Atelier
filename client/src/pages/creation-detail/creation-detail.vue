@@ -3,6 +3,7 @@ import { computed, onUnmounted, ref } from "vue";
 import { onLoad } from "@dcloudio/uni-app";
 import { useDialog, useToast } from "@wot-ui/ui";
 import { deleteCreation, getCreation, retryCreation } from "@/api/creation";
+import { ApiError } from "@/api/request";
 import { getProfile } from "@/api/user";
 import { useUserStore } from "@/store/user";
 import type { Creation } from "@/types/api";
@@ -51,8 +52,13 @@ function startPollingIfNeeded() {
       const latest = await getCreation(detail.value.id);
       detail.value = latest;
       if (latest.status !== "pending") stopPolling();
-    } catch {
-      // 网络抖动不终止轮询
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 404) {
+        stopPolling();
+        errorMsg.value = "记录不存在";
+        detail.value = null;
+      }
+      // 其余错误当作网络抖动，下次 tick 再试
     }
   }, POLL_INTERVAL_MS);
 }
