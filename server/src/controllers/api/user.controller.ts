@@ -1,10 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 
 import {
-  getWxUserProfile,
+  getUserProfile,
+  loginByPassword,
   loginByWxCode,
-  updateWxUserProfile,
-} from "../../services/wx-user.service";
+  registerByPassword,
+  updateUserProfile,
+} from "../../services/user.service";
 import { HttpError } from "../../utils/http-error";
 import { sendSuccess } from "../../utils/response";
 
@@ -19,6 +21,44 @@ const readCurrentUserId = (request: Request): number => {
   }
 
   return userId;
+};
+
+/**
+ * 账号密码注册。
+ */
+export const register = async (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const data = await registerByPassword({
+      account: String(request.body.account ?? ""),
+      password: String(request.body.password ?? ""),
+    });
+    sendSuccess(response, data, "注册成功");
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 账号密码登录。
+ */
+export const login = async (
+  request: Request,
+  response: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const data = await loginByPassword({
+      account: String(request.body.account ?? ""),
+      password: String(request.body.password ?? ""),
+    });
+    sendSuccess(response, data, "登录成功");
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -47,7 +87,7 @@ export const getProfile = async (
 ): Promise<void> => {
   try {
     const userId = readCurrentUserId(request);
-    const data = await getWxUserProfile(userId);
+    const data = await getUserProfile(userId);
     sendSuccess(response, data);
   } catch (error) {
     next(error);
@@ -64,9 +104,10 @@ export const updateProfile = async (
 ): Promise<void> => {
   try {
     const userId = readCurrentUserId(request);
-    const data = await updateWxUserProfile(userId, {
+    const data = await updateUserProfile(userId, {
       nickname: request.body.nickname,
       avatar: request.body.avatar,
+      phone: request.body.phone,
     });
     sendSuccess(response, data, "更新成功");
   } catch (error) {

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from "@/config";
-import type { WxUser } from "@/types/api";
+import type { User } from "@/types/api";
 
 /**
  * 当前登录用户的全局状态。
@@ -9,7 +9,7 @@ import type { WxUser } from "@/types/api";
  */
 export const useUserStore = defineStore("user", () => {
   const token = ref<string>("");
-  const user = ref<WxUser | null>(null);
+  const user = ref<User | null>(null);
   const isLoggedIn = computed(() => Boolean(token.value));
 
   /**
@@ -19,13 +19,13 @@ export const useUserStore = defineStore("user", () => {
     const cachedToken = uni.getStorageSync(TOKEN_STORAGE_KEY);
     const cachedUser = uni.getStorageSync(USER_STORAGE_KEY);
     if (cachedToken) token.value = cachedToken;
-    if (cachedUser) user.value = cachedUser as WxUser;
+    if (cachedUser) user.value = cachedUser as User;
   }
 
   /**
-   * 登录成功后写入 token + 用户资料，并持久化。
+   * 登录/注册成功后写入 token + 用户资料，并持久化。
    */
-  function setSession(nextToken: string, nextUser: WxUser) {
+  function setSession(nextToken: string, nextUser: User) {
     token.value = nextToken;
     user.value = nextUser;
     uni.setStorageSync(TOKEN_STORAGE_KEY, nextToken);
@@ -35,7 +35,7 @@ export const useUserStore = defineStore("user", () => {
   /**
    * 仅更新用户资料（如昵称/头像变更后），不动 token。
    */
-  function setUser(nextUser: WxUser) {
+  function setUser(nextUser: User) {
     user.value = nextUser;
     uni.setStorageSync(USER_STORAGE_KEY, nextUser);
   }

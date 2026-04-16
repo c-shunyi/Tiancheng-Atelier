@@ -43,21 +43,23 @@ model AdminUser {
   @@map("admin_users")
 }
 
-enum WxUserStatus {
+enum UserStatus {
   active
   disabled
 }
 
-model WxUser {
-  id        Int          @id @default(autoincrement())
-  openid    String       @unique @db.VarChar(64)
-  unionid   String?      @unique @db.VarChar(64)
-  nickname  String       @default("") @db.VarChar(64)
-  avatar    String       @default("") @db.VarChar(512)
-  phone     String       @default("") @db.VarChar(20)
-  status    WxUserStatus @default(active)
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String?    @unique @db.VarChar(64)
+  phone        String?    @unique @db.VarChar(20)
+  passwordHash String?    @map("password_hash") @db.VarChar(255)
+  openid       String?    @unique @db.VarChar(64)
+  unionid      String?    @unique @db.VarChar(64)
+  nickname     String     @default("") @db.VarChar(64)
+  avatar       String     @default("") @db.VarChar(512)
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  @@map("wx_users")
+  @@map("users")
 }

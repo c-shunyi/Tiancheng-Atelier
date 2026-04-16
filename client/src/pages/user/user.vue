@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onShow } from "@dcloudio/uni-app";
-import { getProfile } from "@/api/wx";
+import { getProfile } from "@/api/user";
 import { useUserStore } from "@/store/user";
 
 const userStore = useUserStore();
@@ -36,8 +36,12 @@ function handleLogout() {
         mode="aspectFill"
       />
       <view v-else class="avatar placeholder" />
-      <text class="nickname">{{ userStore.user?.nickname || "微信用户" }}</text>
-      <text class="meta">openid：{{ userStore.user?.openid }}</text>
+      <text class="nickname">
+        {{ userStore.user?.nickname || userStore.user?.username || userStore.user?.phone || "用户" }}
+      </text>
+      <text v-if="userStore.user?.username" class="meta">用户名：{{ userStore.user.username }}</text>
+      <text v-if="userStore.user?.phone" class="meta">手机号：{{ userStore.user.phone }}</text>
+      <text v-if="userStore.user?.hasWx" class="meta">已绑定微信</text>
       <button class="danger" @click="handleLogout">退出登录</button>
     </view>
 
