@@ -12,7 +12,7 @@ interface RequestOptions {
   /** HTTP 方法，默认 GET */
   method?: Method;
   /** 请求体 / query 参数 */
-  data?: Record<string, unknown>;
+  data?: object;
   /** 是否自动附带 Authorization 头，默认 true */
   auth?: boolean;
 }

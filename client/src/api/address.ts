@@ -14,7 +14,7 @@ export function createAddress(data: AddressInput) {
 }
 
 export function updateAddress(id: number, data: Partial<AddressInput>) {
-  return request<Address>({ url: `/addresses/${id}`, method: "PATCH", data });
+  return request<Address>({ url: `/addresses/${id}`, method: "PUT", data });
 }
 
 export function deleteAddress(id: number) {

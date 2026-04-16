@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { onShow } from "@dcloudio/uni-app";
 import { useToast } from "@wot-ui/ui";
 import { createCreation, getCreation, listCreations } from "@/api/creation";
@@ -19,6 +19,7 @@ const selectedPromptId = ref<number | null>(null);
 const submitting = ref(false);
 const tasks = ref<Creation[]>([]);
 const pickerOpen = ref(false);
+const createOpen = ref(false);
 
 const canSubmit = computed(
   () => !submitting.value && !!sourcePath.value && selectedPromptId.value !== null,
@@ -28,7 +29,6 @@ const selectedPreset = computed(() =>
   presets.value.find((p) => p.id === selectedPromptId.value) ?? null,
 );
 
-/** 每个 pending 任务对应的轮询定时器，任务结束时清理。 */
 const pollTimers = new Map<number, ReturnType<typeof setInterval>>();
 
 function ensureLogin(): boolean {
@@ -107,6 +107,16 @@ async function loadPresets() {
   }
 }
 
+function openCreate() {
+  if (!ensureLogin()) return;
+  createOpen.value = true;
+}
+
+function closeCreate() {
+  if (submitting.value) return;
+  createOpen.value = false;
+}
+
 function openPicker() {
   if (presets.value.length === 0) {
     toast.show("暂无可用风格");
@@ -145,8 +155,8 @@ async function handleSubmit() {
     startPolling(created.id);
     sourcePath.value = "";
     selectedPromptId.value = null;
+    createOpen.value = false;
 
-    // 刷新 profile 以同步最新的 freeQuotaRemaining
     try {
       const profile = await getProfile();
       userStore.setUser(profile);
@@ -169,7 +179,6 @@ function goDetail(task: Creation) {
 function saveResult(task: Creation) {
   if (!task.resultUrl) return;
   // #ifdef H5
-  // H5 浏览器不支持 saveImageToPhotosAlbum，直接新标签打开让用户右键保存
   window.open(task.resultUrl, "_blank");
   return;
   // #endif
@@ -192,10 +201,6 @@ function saveResult(task: Creation) {
   // #endif
 }
 
-function goHistory() {
-  uni.navigateTo({ url: "/pages/creation-history/creation-history" });
-}
-
 async function refreshProfile() {
   if (!userStore.isLoggedIn) return;
   try {
@@ -212,16 +217,29 @@ onShow(() => {
     refreshProfile();
     loadHistory();
   } else {
-    // 未登录清空残留，避免从登录态切回显示旧数据
     tasks.value = [];
     for (const timer of pollTimers.values()) clearInterval(timer);
     pollTimers.clear();
   }
 });
 
+// 弹窗打开时锁定外层页面滚动，避免穿透
+watch([createOpen, pickerOpen], ([c, p]) => {
+  // #ifdef H5
+  if (typeof document !== "undefined") {
+    document.body.style.overflow = c || p ? "hidden" : "";
+  }
+  // #endif
+});
+
 onUnmounted(() => {
   for (const timer of pollTimers.values()) clearInterval(timer);
   pollTimers.clear();
+  // #ifdef H5
+  if (typeof document !== "undefined") {
+    document.body.style.overflow = "";
+  }
+  // #endif
 });
 </script>
 
@@ -234,129 +252,162 @@ onUnmounted(() => {
     </view>
 
     <template v-else>
-    <view v-if="userStore.user" class="quota">
-      <text class="quota-label">今日免费次数</text>
-      <text class="quota-value">
-        <text class="quota-remaining">{{ userStore.user.freeQuotaRemaining }}</text>
-        / {{ userStore.user.freeQuotaLimit }}
-      </text>
-    </view>
-
-    <view class="card">
-      <view class="card-title">参考图</view>
-      <view class="picker" @click="chooseImage">
-        <image
-          v-if="sourcePath"
-          class="preview"
-          :src="sourcePath"
-          mode="aspectFill"
-        />
-        <view v-else class="placeholder">
-          <text class="plus">+</text>
-          <text class="hint">点击选择图片</text>
+      <view v-if="userStore.user" class="quota">
+        <view class="quota-main">
+          <text class="quota-label">今日免费次数</text>
+          <text class="quota-value">
+            <text class="quota-remaining">{{ userStore.user.freeQuotaRemaining }}</text>
+            <text class="quota-total"> / {{ userStore.user.freeQuotaLimit }}</text>
+          </text>
         </view>
       </view>
-      <view v-if="sourcePath" class="clear" @click="clearSource">
-        <text>重新选择</text>
+
+      <view class="section-head">
+        <text class="section-title">我的创作</text>
+        <text class="section-count" v-if="tasks.length">{{ tasks.length }}</text>
       </view>
-    </view>
 
-    <view class="card">
-      <view class="card-title">风格</view>
-      <wd-cell
-        :title="selectedPreset ? selectedPreset.title : '请选择风格'"
-        :label="selectedPreset?.content"
-        is-link
-        clickable
-        @click="openPicker"
-      />
-    </view>
+      <view v-if="tasks.length === 0" class="empty">
+        <text class="empty-title">还没有创作</text>
+        <text class="empty-desc">点击右下角按钮开始你的第一次创作</text>
+      </view>
 
-    <wd-button
-      type="primary"
-      block
-      size="large"
-      :loading="submitting"
-      :disabled="!canSubmit"
-      custom-class="submit-btn"
-      @click="handleSubmit"
-    >
-      {{ submitting ? "提交中..." : "开始生成" }}
-    </wd-button>
-
-    <view v-if="tasks.length" class="tasks">
-      <view class="tasks-title">最近任务</view>
-      <view
-        v-for="task in tasks"
-        :key="task.id"
-        class="task"
-        :class="`task--${task.status}`"
-        @click="goDetail(task)"
-      >
-        <image
-          v-if="task.status === 'success' && task.resultUrl"
-          class="task-image"
-          :src="task.resultUrl"
-          mode="aspectFill"
-        />
-        <view v-else class="task-image task-image--placeholder">
-          <wd-tag v-if="task.status === 'pending'" type="primary" plain>生成中</wd-tag>
-          <wd-tag v-else type="danger" plain>生成失败</wd-tag>
-        </view>
-        <view class="task-body">
-          <view class="task-prompt">{{ task.prompt }}</view>
-          <view class="task-meta">
-            <text class="task-time">{{ task.createdAt.slice(0, 16).replace("T", " ") }}</text>
-            <wd-button
-              v-if="task.status === 'success'"
-              size="small"
-              plain
+      <view v-else class="grid">
+        <view
+          v-for="task in tasks"
+          :key="task.id"
+          class="cell"
+          :class="`cell--${task.status}`"
+          @click="goDetail(task)"
+        >
+          <image
+            v-if="task.status === 'success' && task.resultUrl"
+            class="cell-image"
+            :src="task.resultUrl"
+            mode="aspectFill"
+          />
+          <view v-else class="cell-image cell-image--placeholder">
+            <wd-tag
+              v-if="task.status === 'pending'"
               type="primary"
+              plain
+              custom-class="cell-tag"
+            >
+              生成中
+            </wd-tag>
+            <wd-tag v-else type="danger" plain custom-class="cell-tag">失败</wd-tag>
+          </view>
+          <view class="cell-overlay">
+            <text class="cell-time">{{ task.createdAt.slice(5, 16).replace("T", " ") }}</text>
+            <view
+              v-if="task.status === 'success'"
+              class="cell-save"
               @click.stop="saveResult(task)"
             >
-              保存
+              <text>保存</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view v-if="!createOpen" class="fab" @click="openCreate">
+        <text class="fab-plus">+</text>
+      </view>
+
+      <wd-popup
+        v-model="createOpen"
+        position="bottom"
+        :safe-area-inset-bottom="true"
+        :close-on-click-modal="!submitting"
+        custom-style="border-radius: 28rpx 28rpx 0 0; background: var(--bg-grouped);"
+        @close="closeCreate"
+      >
+        <view class="sheet">
+          <view class="sheet-header">
+            <text class="sheet-title">新建创作</text>
+            <wd-icon name="close" size="20px" custom-class="sheet-close" @click="closeCreate" />
+          </view>
+
+          <scroll-view scroll-y class="sheet-body">
+            <view class="card">
+              <view class="card-title">参考图</view>
+              <view class="picker" @click="chooseImage">
+                <image
+                  v-if="sourcePath"
+                  class="preview"
+                  :src="sourcePath"
+                  mode="aspectFill"
+                />
+                <view v-else class="placeholder">
+                  <text class="plus">+</text>
+                  <text class="hint">点击选择图片</text>
+                </view>
+              </view>
+              <view v-if="sourcePath" class="clear" @click="clearSource">
+                <text>重新选择</text>
+              </view>
+            </view>
+
+            <view class="card">
+              <view class="card-title">风格</view>
+              <wd-cell
+                :title="selectedPreset ? selectedPreset.title : '请选择风格'"
+                is-link
+                clickable
+                @click="openPicker"
+              />
+            </view>
+          </scroll-view>
+
+          <view class="sheet-footer">
+            <wd-button
+              type="primary"
+              block
+              size="large"
+              :loading="submitting"
+              :disabled="!canSubmit"
+              custom-class="submit-btn"
+              @click="handleSubmit"
+            >
+              {{ submitting ? "提交中..." : "开始生成" }}
             </wd-button>
           </view>
         </view>
-      </view>
-    </view>
+      </wd-popup>
 
-    <view class="history-entry" @click="goHistory">
-      <text>查看全部历史 ›</text>
-    </view>
-
-    <wd-popup
-      v-model="pickerOpen"
-      position="bottom"
-      :safe-area-inset-bottom="true"
-      custom-style="border-radius: 24rpx 24rpx 0 0; max-height: 80vh; display: flex; flex-direction: column;"
-      @close="closePicker"
-    >
-      <view class="picker-header">
-        <text class="picker-title">选择风格</text>
-        <wd-icon name="close" size="18px" custom-class="picker-close" @click="closePicker" />
-      </view>
-      <scroll-view scroll-y class="picker-list">
-        <view
-          v-for="preset in presets"
-          :key="preset.id"
-          class="preset"
-          :class="{ 'preset--active': preset.id === selectedPromptId }"
-          @click="selectPreset(preset.id)"
-        >
-          <image
-            v-if="preset.cover"
-            class="preset-cover"
-            :src="preset.cover"
-            mode="aspectFill"
-          />
-          <view class="preset-body">
-            <view class="preset-title">{{ preset.title }}</view>
-            <view class="preset-content">{{ preset.content }}</view>
+      <wd-popup
+        v-model="pickerOpen"
+        position="bottom"
+        :safe-area-inset-bottom="true"
+        custom-style="border-radius: 28rpx 28rpx 0 0;"
+        @close="closePicker"
+      >
+        <view class="picker-panel">
+          <view class="picker-header">
+            <text class="picker-title">选择风格</text>
+            <wd-icon name="close" size="18px" custom-class="picker-close" @click="closePicker" />
           </view>
+          <scroll-view scroll-y class="picker-list">
+            <view
+              v-for="preset in presets"
+              :key="preset.id"
+              class="preset"
+              :class="{ 'preset--active': preset.id === selectedPromptId }"
+              @click="selectPreset(preset.id)"
+            >
+              <image
+                v-if="preset.cover"
+                class="preset-cover"
+                :src="preset.cover"
+                mode="aspectFill"
+              />
+              <view class="preset-body">
+                <view class="preset-title">{{ preset.title }}</view>
+              </view>
+            </view>
+          </scroll-view>
         </view>
-      </scroll-view>
-    </wd-popup>
+      </wd-popup>
     </template>
 
     <wd-toast />
@@ -367,20 +418,23 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .page {
-  padding: 24rpx 28rpx 64rpx;
+  padding: 24rpx 28rpx 200rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
 
 .quota {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 24rpx 28rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 32rpx;
   background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(88, 86, 214, 0.08));
   border-radius: var(--radius-card);
   border: 0.5rpx solid rgba(0, 122, 255, 0.15);
+
+  .quota-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
   .quota-label {
     font-size: 26rpx;
@@ -389,17 +443,39 @@ onUnmounted(() => {
   }
 
   .quota-value {
-    font-size: 26rpx;
-    color: var(--text-tertiary);
     font-variant-numeric: tabular-nums;
 
     .quota-remaining {
-      font-size: 40rpx;
+      font-size: 44rpx;
       font-weight: 700;
       color: var(--accent);
-      margin-right: 4rpx;
       letter-spacing: -0.5rpx;
     }
+
+    .quota-total {
+      font-size: 26rpx;
+      color: var(--text-tertiary);
+    }
+  }
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4rpx 20rpx;
+
+  .section-title {
+    font-size: 36rpx;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3rpx;
+  }
+
+  .section-count {
+    font-size: 24rpx;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -430,12 +506,189 @@ onUnmounted(() => {
   }
 }
 
+.empty {
+  margin-top: 160rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 0 48rpx;
+
+  .empty-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .empty-desc {
+    font-size: 26rpx;
+    color: var(--text-tertiary);
+    text-align: center;
+    line-height: 1.5;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &--pending .cell-image,
+  &--failed .cell-image {
+    opacity: 0.9;
+  }
+
+  .cell-image {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-tint);
+
+    &--placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .cell-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 16rpx 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+    color: #fff;
+  }
+
+  .cell-time {
+    font-size: 22rpx;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2rpx;
+  }
+
+  .cell-save {
+    padding: 6rpx 16rpx;
+    font-size: 22rpx;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.28);
+    border-radius: var(--radius-pill);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+:deep(.cell-tag) {
+  font-size: 22rpx !important;
+}
+
+.fab {
+  position: fixed;
+  right: 40rpx;
+  bottom: calc(env(safe-area-inset-bottom, 0) + 48rpx);
+  /* #ifdef H5 */
+  bottom: calc(env(safe-area-inset-bottom, 0) + 70px + 32rpx);
+  /* #endif */
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 32rpx rgba(0, 122, 255, 0.35),
+    0 4rpx 12rpx rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.94);
+    box-shadow: 0 6rpx 16rpx rgba(0, 122, 255, 0.35);
+  }
+
+  .fab-plus {
+    font-size: 64rpx;
+    line-height: 1;
+    font-weight: 300;
+    margin-top: -6rpx;
+  }
+}
+
+.sheet {
+  width: 100vw;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--bg-grouped);
+  overflow: hidden;
+  /* #ifdef H5 */
+  padding-bottom: 70px; /* 让位 H5 自定义 tabBar */
+  /* #endif */
+}
+
+.sheet-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 28rpx 16rpx;
+  background: var(--bg-grouped);
+  box-sizing: border-box;
+
+  .sheet-title {
+    font-size: 34rpx;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.2rpx;
+  }
+}
+
+.sheet-close {
+  color: var(--text-tertiary);
+  padding: 8rpx 16rpx;
+}
+
+.sheet-body {
+  flex: 1;
+  min-height: 0;
+  padding: 8rpx 28rpx 24rpx;
+  box-sizing: border-box;
+}
+
+.sheet-footer {
+  flex-shrink: 0;
+  padding: 16rpx 28rpx 24rpx;
+  background: var(--bg-grouped);
+  border-top: 0.5rpx solid var(--separator);
+  box-sizing: border-box;
+}
+
 .card {
+  width: 100%;
   background: var(--bg-card);
   border-radius: var(--radius-card);
   padding: 28rpx 24rpx 24rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: 20rpx;
   box-shadow: var(--shadow-card);
+  box-sizing: border-box;
 
   .card-title {
     font-size: 28rpx;
@@ -490,12 +743,28 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+.picker-panel {
+  width: 100vw;
+  height: 75vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--bg-card);
+  overflow: hidden;
+  /* #ifdef H5 */
+  padding-bottom: 70px; /* 让位 H5 自定义 tabBar */
+  /* #endif */
+}
+
 .picker-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28rpx 32rpx 20rpx;
+  padding: 28rpx 28rpx 20rpx;
   border-bottom: 0.5rpx solid var(--separator);
+  background: var(--bg-card);
+  box-sizing: border-box;
 
   .picker-title {
     font-size: 32rpx;
@@ -512,20 +781,29 @@ onUnmounted(() => {
 
 .picker-list {
   flex: 1;
+  min-height: 0;
   padding: 20rpx 28rpx 32rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+  box-sizing: border-box;
+  /* #ifdef H5 */
+  padding-bottom: calc(32rpx + 70px);
+  /* #endif */
 }
 
 .preset {
+  box-sizing: border-box;
+  width: 100%;
   display: flex;
   gap: 20rpx;
   padding: 20rpx;
+  margin-bottom: 16rpx;
   background: #fafafa;
   border: 2rpx solid transparent;
   border-radius: 20rpx;
   transition: all 0.2s ease;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   &--active {
     background: rgba(0, 122, 255, 0.06);
@@ -568,109 +846,10 @@ onUnmounted(() => {
 }
 
 :deep(.submit-btn) {
-  margin-top: 24rpx;
   border-radius: var(--radius-button) !important;
   height: 96rpx !important;
   font-size: 32rpx !important;
   font-weight: 600 !important;
   letter-spacing: 0.5rpx !important;
-}
-
-.tasks {
-  margin-top: 40rpx;
-
-  .tasks-title {
-    font-size: 24rpx;
-    color: var(--text-secondary);
-    padding: 0 12rpx 16rpx;
-    text-transform: uppercase;
-    letter-spacing: 1rpx;
-    font-weight: 500;
-  }
-}
-
-.task {
-  display: flex;
-  gap: 20rpx;
-  padding: 20rpx;
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  margin-bottom: 16rpx;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.15s ease;
-
-  &:active {
-    transform: scale(0.99);
-  }
-
-  &--pending {
-    border: 0.5rpx solid rgba(0, 122, 255, 0.3);
-  }
-
-  &--failed {
-    border: 0.5rpx solid rgba(255, 59, 48, 0.3);
-  }
-}
-
-.task-image {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 16rpx;
-  background: var(--bg-tint);
-  flex-shrink: 0;
-
-  &--placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-.task-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-}
-
-.task-prompt {
-  font-size: 26rpx;
-  color: var(--text-primary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.task-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12rpx;
-
-  .task-time {
-    font-size: 22rpx;
-    color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-.history-entry {
-  margin-top: 24rpx;
-  padding: 28rpx;
-  background: var(--bg-card);
-  border-radius: var(--radius-card);
-  text-align: center;
-  color: var(--accent);
-  font-size: 28rpx;
-  font-weight: 500;
-  box-shadow: var(--shadow-card);
-  transition: opacity 0.15s ease;
-
-  &:active {
-    opacity: 0.6;
-  }
 }
 </style>

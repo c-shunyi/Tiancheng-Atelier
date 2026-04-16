@@ -14,7 +14,7 @@ const router = Router();
 router.get("/", authMiddleware("user"), listAddresses);
 router.post("/", authMiddleware("user"), createAddress);
 router.get("/:id", authMiddleware("user"), getAddress);
-router.patch("/:id", authMiddleware("user"), updateAddress);
+router.put("/:id", authMiddleware("user"), updateAddress);
 router.delete("/:id", authMiddleware("user"), deleteAddress);
 
 export default router;

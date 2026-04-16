@@ -75,14 +75,17 @@ enum CreationStatus {
 }
 
 model PromptPreset {
-  id        Int      @id @default(autoincrement())
-  title     String   @db.VarChar(64)
-  content   String   @db.Text
-  cover     String   @default("") @db.VarChar(512)
-  sortOrder Int      @default(0) @map("sort_order")
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(64)
+  /// 对外展示的风格介绍（给用户看的）
+  description String   @default("") @db.VarChar(255)
+  /// 实际提交给模型的提示词（不对外展示）
+  content     String   @db.Text
+  cover       String   @default("") @db.VarChar(512)
+  sortOrder   Int      @default(0) @map("sort_order")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([enabled, sortOrder])
   @@map("prompt_presets")

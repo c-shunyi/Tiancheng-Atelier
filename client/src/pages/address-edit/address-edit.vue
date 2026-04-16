@@ -180,18 +180,17 @@ async function handleSave() {
 
 <style lang="scss" scoped>
 .page {
-  padding: 24rpx 32rpx 64rpx;
-  background: #f5f6f8;
+  padding: 24rpx 28rpx 64rpx;
   min-height: 100vh;
   box-sizing: border-box;
 }
 
 .card {
-  background: #ffffff;
-  border-radius: 16rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
   padding: 8rpx 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+  box-shadow: var(--shadow-card);
 }
 
 .field {
@@ -199,7 +198,7 @@ async function handleSave() {
   align-items: center;
   gap: 20rpx;
   padding: 24rpx 0;
-  border-bottom: 1rpx solid #f1f5f9;
+  border-bottom: 1rpx solid var(--separator);
 
   &:last-child {
     border-bottom: none;
@@ -219,13 +218,13 @@ async function handleSave() {
     flex-shrink: 0;
     width: 160rpx;
     font-size: 28rpx;
-    color: #1f2937;
+    color: var(--text-primary);
   }
 
   .input {
     flex: 1;
     font-size: 28rpx;
-    color: #1f2937;
+    color: var(--text-primary);
 
     &.as-picker {
       display: flex;
@@ -234,15 +233,15 @@ async function handleSave() {
     }
 
     .placeholder {
-      color: #94a3b8;
+      color: var(--text-tertiary);
     }
 
     .region-text {
-      color: #1f2937;
+      color: var(--text-primary);
     }
 
     .arrow {
-      color: #cbd5e1;
+      color: var(--text-tertiary);
       font-size: 32rpx;
     }
   }
@@ -251,7 +250,7 @@ async function handleSave() {
     width: 100%;
     min-height: 120rpx;
     font-size: 28rpx;
-    color: #1f2937;
+    color: var(--text-primary);
     line-height: 1.6;
   }
 }

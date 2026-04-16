@@ -8,13 +8,14 @@ import { storage } from "./storage";
 const toPresetDto = (row: {
   id: number;
   title: string;
-  content: string;
+  description: string;
   cover: string;
   sortOrder: number;
 }) => ({
   id: row.id,
   title: row.title,
-  content: row.content,
+  /** 对外展示的风格介绍；content（真实提示词）不再下发给前端 */
+  description: row.description,
   cover: row.cover ? storage.getPublicUrl(row.cover) : "",
   sortOrder: row.sortOrder,
 });
