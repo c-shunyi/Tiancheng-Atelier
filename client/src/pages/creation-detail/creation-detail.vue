@@ -187,7 +187,11 @@ onUnmounted(() => {
         />
         <view v-else class="result-placeholder" :class="`result-placeholder--${detail.status}`">
           <text v-if="detail.status === 'pending'">生成中，请稍候…</text>
-          <text v-else>生成失败</text>
+          <template v-else>
+            <text class="fail-icon">!</text>
+            <text class="fail-title">生成失败</text>
+            <text class="fail-desc">请检查参考图与提示词后重试</text>
+          </template>
         </view>
       </view>
 
@@ -305,8 +309,110 @@ onUnmounted(() => {
   font-size: 26rpx;
   color: var(--accent);
 
+  &--pending {
+    color: #fff;
+    font-weight: 500;
+    letter-spacing: 1rpx;
+    text-shadow: 0 1rpx 4rpx rgba(147, 51, 234, 0.4);
+    background:
+      radial-gradient(circle at 20% 25%, #c084fc 0%, transparent 55%),
+      radial-gradient(circle at 80% 30%, #f472b6 0%, transparent 55%),
+      radial-gradient(circle at 55% 85%, #a855f7 0%, transparent 60%),
+      radial-gradient(circle at 30% 70%, #ec4899 0%, transparent 60%),
+      linear-gradient(135deg, #faf5ff, #fdf2f8);
+    background-size: 240% 240%, 240% 240%, 240% 240%, 240% 240%, 100% 100%;
+    animation: liquid-flow 18s ease-in-out infinite;
+  }
+
   &--failed {
-    color: var(--danger);
+    flex-direction: column;
+    gap: 10rpx;
+    background: linear-gradient(160deg, #fff1f2 0%, #ffe4e6 100%);
+    color: #be123c;
+
+    .fail-icon {
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: 50%;
+      background: rgba(244, 63, 94, 0.12);
+      color: #e11d48;
+      font-size: 40rpx;
+      font-weight: 700;
+      line-height: 64rpx;
+      text-align: center;
+      margin-bottom: 4rpx;
+    }
+
+    .fail-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      letter-spacing: 0.5rpx;
+    }
+
+    .fail-desc {
+      font-size: 22rpx;
+      color: #9f1239;
+      opacity: 0.75;
+    }
+  }
+}
+
+@keyframes liquid-flow {
+  0% {
+    background-position:
+      10% 20%,
+      85% 15%,
+      60% 90%,
+      25% 75%,
+      0 0;
+  }
+  17% {
+    background-position:
+      70% 55%,
+      15% 70%,
+      30% 25%,
+      90% 40%,
+      0 0;
+  }
+  34% {
+    background-position:
+      40% 85%,
+      60% 20%,
+      80% 60%,
+      10% 10%,
+      0 0;
+  }
+  52% {
+    background-position:
+      90% 30%,
+      25% 85%,
+      50% 5%,
+      70% 65%,
+      0 0;
+  }
+  69% {
+    background-position:
+      15% 65%,
+      80% 45%,
+      25% 80%,
+      55% 15%,
+      0 0;
+  }
+  86% {
+    background-position:
+      65% 10%,
+      30% 60%,
+      90% 35%,
+      15% 90%,
+      0 0;
+  }
+  100% {
+    background-position:
+      10% 20%,
+      85% 15%,
+      60% 90%,
+      25% 75%,
+      0 0;
   }
 }
 

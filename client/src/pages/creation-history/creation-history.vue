@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { onShow } from "@dcloudio/uni-app";
+import { onShow, onReachBottom, onPullDownRefresh } from "@dcloudio/uni-app";
 import { useDialog, useToast } from "@wot-ui/ui";
 import { deleteCreation, listCreations } from "@/api/creation";
 import { useUserStore } from "@/store/user";
@@ -48,6 +48,22 @@ async function loadMore() {
 
 onShow(() => {
   resetAndLoad();
+});
+
+onReachBottom(() => {
+  loadMore();
+});
+
+onPullDownRefresh(async () => {
+  list.value = [];
+  page.value = 1;
+  total.value = 0;
+  finished.value = false;
+  try {
+    await loadMore();
+  } finally {
+    uni.stopPullDownRefresh();
+  }
 });
 
 function goDetail(item: Creation) {
@@ -107,13 +123,7 @@ async function confirmDelete(item: Creation) {
 
     <view v-if="loading" class="hint">加载中…</view>
     <view v-else-if="finished && list.length > 0" class="hint">已经到底啦</view>
-    <view
-      v-else-if="!finished && list.length > 0"
-      class="hint link"
-      @click="loadMore"
-    >
-      点击加载更多
-    </view>
+    <view v-else-if="!finished && list.length > 0" class="hint">上拉加载更多</view>
 
     <wd-toast />
     <wd-dialog />

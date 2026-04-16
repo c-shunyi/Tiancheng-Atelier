@@ -27,7 +27,9 @@
     {
       "path": "pages/creation-history/creation-history",
       "style": {
-        "navigationBarTitleText": "我的创作"
+        "navigationBarTitleText": "我的创作",
+        "enablePullDownRefresh": true,
+        "onReachBottomDistance": 80
       }
     },
     {

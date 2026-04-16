@@ -316,15 +316,13 @@ onUnmounted(() => {
             mode="aspectFill"
           />
           <view v-else class="cell-image cell-image--placeholder">
-            <wd-tag
-              v-if="task.status === 'pending'"
-              type="primary"
-              plain
-              custom-class="cell-tag"
-            >
-              生成中
-            </wd-tag>
-            <wd-tag v-else type="danger" plain custom-class="cell-tag">失败</wd-tag>
+            <view v-if="task.status === 'pending'" class="cell-chip cell-chip--pending">
+              <text>生成中</text>
+            </view>
+            <view v-else class="cell-chip cell-chip--failed">
+              <text class="cell-chip-dot">!</text>
+              <text>生成失败</text>
+            </view>
           </view>
           <view class="cell-overlay">
             <text class="cell-time">{{ task.createdAt.slice(5, 16).replace("T", " ") }}</text>
@@ -568,7 +566,6 @@ onUnmounted(() => {
     transform: scale(0.98);
   }
 
-  &--pending .cell-image,
   &--failed .cell-image {
     opacity: 0.9;
   }
@@ -583,6 +580,21 @@ onUnmounted(() => {
       align-items: center;
       justify-content: center;
     }
+  }
+
+  &--pending .cell-image--placeholder {
+    background:
+      radial-gradient(circle at 20% 25%, #c084fc 0%, transparent 55%),
+      radial-gradient(circle at 80% 30%, #f472b6 0%, transparent 55%),
+      radial-gradient(circle at 55% 85%, #a855f7 0%, transparent 60%),
+      radial-gradient(circle at 30% 70%, #ec4899 0%, transparent 60%),
+      linear-gradient(135deg, #faf5ff, #fdf2f8);
+    background-size: 240% 240%, 240% 240%, 240% 240%, 240% 240%, 100% 100%;
+    animation: liquid-flow 18s ease-in-out infinite;
+  }
+
+  &--failed .cell-image--placeholder {
+    background: linear-gradient(160deg, #fff1f2 0%, #ffe4e6 100%);
   }
 
   .cell-overlay {
@@ -630,6 +642,46 @@ onUnmounted(() => {
 
 :deep(.cell-tag) {
   font-size: 22rpx !important;
+}
+
+.cell-chip {
+  padding: 8rpx 22rpx;
+  border-radius: var(--radius-pill);
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 0.4rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+
+  &--pending {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.25);
+    border: 1rpx solid rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    text-shadow: 0 1rpx 2rpx rgba(147, 51, 234, 0.35);
+  }
+
+  &--failed {
+    color: #be123c;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1rpx solid rgba(244, 63, 94, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    .cell-chip-dot {
+      width: 24rpx;
+      height: 24rpx;
+      border-radius: 50%;
+      background: #e11d48;
+      color: #fff;
+      font-size: 18rpx;
+      font-weight: 700;
+      line-height: 24rpx;
+      text-align: center;
+    }
+  }
 }
 
 .fab {
@@ -882,5 +934,64 @@ onUnmounted(() => {
   font-size: 32rpx !important;
   font-weight: 600 !important;
   letter-spacing: 0.5rpx !important;
+}
+
+@keyframes liquid-flow {
+  0% {
+    background-position:
+      10% 20%,
+      85% 15%,
+      60% 90%,
+      25% 75%,
+      0 0;
+  }
+  17% {
+    background-position:
+      70% 55%,
+      15% 70%,
+      30% 25%,
+      90% 40%,
+      0 0;
+  }
+  34% {
+    background-position:
+      40% 85%,
+      60% 20%,
+      80% 60%,
+      10% 10%,
+      0 0;
+  }
+  52% {
+    background-position:
+      90% 30%,
+      25% 85%,
+      50% 5%,
+      70% 65%,
+      0 0;
+  }
+  69% {
+    background-position:
+      15% 65%,
+      80% 45%,
+      25% 80%,
+      55% 15%,
+      0 0;
+  }
+  86% {
+    background-position:
+      65% 10%,
+      30% 60%,
+      90% 35%,
+      15% 90%,
+      0 0;
+  }
+  100% {
+    background-position:
+      10% 20%,
+      85% 15%,
+      60% 90%,
+      25% 75%,
+      0 0;
+  }
 }
 </style>
