@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import path from "node:path";
 
 dotenv.config({ quiet: true });
 
@@ -33,6 +34,24 @@ const config = {
   corsOrigin: readStringEnv("CORS_ORIGIN", "*"),
   wxAppId: readStringEnv("WX_APPID", ""),
   wxSecret: readStringEnv("WX_SECRET", ""),
+
+  /**
+   * 存储驱动：local（本地磁盘）/ cos（腾讯云对象存储，预留）。
+   */
+  storageDriver: readStringEnv("STORAGE_DRIVER", "local") as "local" | "cos",
+
+  /**
+   * 本地上传根目录（绝对路径）。默认为 server/uploads。
+   */
+  uploadDir: path.resolve(
+    process.cwd(),
+    readStringEnv("UPLOAD_DIR", "uploads"),
+  ),
+
+  /**
+   * 对外可访问的基础 URL，用于拼接文件公开访问地址。
+   */
+  publicBaseUrl: readStringEnv("PUBLIC_BASE_URL", "http://localhost:3000"),
 };
 
 export default config;

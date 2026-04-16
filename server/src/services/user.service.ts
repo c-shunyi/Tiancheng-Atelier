@@ -5,6 +5,7 @@ import { prisma } from "../prisma/client";
 import { HttpError } from "../utils/http-error";
 import { signAccessToken } from "../utils/jwt";
 import { logError } from "../utils/logger";
+import { storage } from "./storage";
 
 /**
  * 微信 jscode2session 接口的响应结构。
@@ -70,7 +71,8 @@ const sanitizeUser = (user: {
     username: user.username,
     phone: user.phone,
     nickname: user.nickname,
-    avatar: user.avatar,
+    /** DB 中存的是存储 key，对外返回完整 URL；未上传则为空字符串 */
+    avatar: user.avatar ? storage.getPublicUrl(user.avatar) : "",
     status: user.status,
     /** 是否已绑定微信，前端用于判断展示 */
     hasWx: Boolean(user.openid),

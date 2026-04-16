@@ -33,6 +33,17 @@ app.use(
 app.use(morgan(config.env === "production" ? "combined" : "dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// 静态文件目录：所有用户上传文件通过 /uploads/<key> 公开访问。
+// 生产环境建议交由 nginx/CDN 直出，并在 nginx 层做限速、防盗链等防护。
+app.use(
+  "/uploads",
+  express.static(config.uploadDir, {
+    fallthrough: false,
+    maxAge: "7d",
+  }),
+);
+
 app.use("/api", routes);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
