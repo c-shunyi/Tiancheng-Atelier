@@ -4,6 +4,7 @@ import { onShow } from "@dcloudio/uni-app";
 import { useToast } from "@wot-ui/ui";
 import { createCreation, getCreation, listCreations } from "@/api/creation";
 import { listPromptPresets } from "@/api/prompt";
+import { getProfile } from "@/api/user";
 import { useUserStore } from "@/store/user";
 import type { Creation, PromptPreset } from "@/types/api";
 
@@ -37,6 +38,10 @@ function ensureLogin(): boolean {
     return false;
   }
   return true;
+}
+
+function goLogin() {
+  uni.navigateTo({ url: "/pages/login/login" });
 }
 
 function chooseImage() {
@@ -140,6 +145,14 @@ async function handleSubmit() {
     startPolling(created.id);
     sourcePath.value = "";
     selectedPromptId.value = null;
+
+    // 刷新 profile 以同步最新的 freeQuotaRemaining
+    try {
+      const profile = await getProfile();
+      userStore.setUser(profile);
+    } catch {
+      /* 刷新失败不影响本次提交提示 */
+    }
     toast.success("已提交，正在生成");
   } catch (err) {
     const message = err instanceof Error ? err.message : "提交失败";
@@ -183,9 +196,20 @@ function goHistory() {
   uni.navigateTo({ url: "/pages/creation-history/creation-history" });
 }
 
+async function refreshProfile() {
+  if (!userStore.isLoggedIn) return;
+  try {
+    const profile = await getProfile();
+    userStore.setUser(profile);
+  } catch {
+    /* 静默：profile 刷新失败不影响主流程 */
+  }
+}
+
 onShow(() => {
   loadPresets();
   if (userStore.isLoggedIn) {
+    refreshProfile();
     loadHistory();
   } else {
     // 未登录清空残留，避免从登录态切回显示旧数据
@@ -203,6 +227,21 @@ onUnmounted(() => {
 
 <template>
   <view class="page">
+    <view v-if="!userStore.isLoggedIn" class="login-tip">
+      <text class="tip-title">登录后才能进行创作</text>
+      <text class="tip-desc">登录账号后可上传参考图并提交生成任务</text>
+      <wd-button type="primary" block size="large" @click="goLogin">去登录</wd-button>
+    </view>
+
+    <template v-else>
+    <view v-if="userStore.user" class="quota">
+      <text class="quota-label">今日免费次数</text>
+      <text class="quota-value">
+        <text class="quota-remaining">{{ userStore.user.freeQuotaRemaining }}</text>
+        / {{ userStore.user.freeQuotaLimit }}
+      </text>
+    </view>
+
     <view class="card">
       <view class="card-title">参考图</view>
       <view class="picker" @click="chooseImage">
@@ -318,6 +357,7 @@ onUnmounted(() => {
         </view>
       </scroll-view>
     </wd-popup>
+    </template>
 
     <wd-toast />
     <wd-dialog />
@@ -331,6 +371,56 @@ onUnmounted(() => {
   background: #f5f6f8;
   min-height: 100vh;
   box-sizing: border-box;
+}
+
+.quota {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 28rpx;
+  margin-bottom: 24rpx;
+  background: #ffffff;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+
+  .quota-label {
+    font-size: 26rpx;
+    color: #64748b;
+  }
+
+  .quota-value {
+    font-size: 28rpx;
+    color: #1f2937;
+
+    .quota-remaining {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-right: 4rpx;
+    }
+  }
+}
+
+.login-tip {
+  margin-top: 200rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+  padding: 0 32rpx;
+
+  .tip-title {
+    font-size: 34rpx;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .tip-desc {
+    font-size: 26rpx;
+    color: #94a3b8;
+    text-align: center;
+    margin-bottom: 24rpx;
+  }
 }
 
 .card {

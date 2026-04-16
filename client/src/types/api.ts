@@ -36,6 +36,12 @@ export interface User {
   hasWx: boolean;
   /** 是否已设置密码 */
   hasPassword: boolean;
+  /** 今日剩余免费创作次数 */
+  freeQuotaRemaining: number;
+  /** 每日免费创作次数上限 */
+  freeQuotaLimit: number;
+  /** 下一次免费次数重置时间（ISO 字符串） */
+  freeQuotaResetAt: string;
   /** 注册时间 */
   createdAt: string;
   /** 最近一次更新时间 */
@@ -68,6 +74,11 @@ export interface Creation {
   resultUrl: string;
   status: CreationStatus;
   createdAt: string;
+  /** 提交成功后后端返回的最新剩余次数（仅在 createCreation 响应中有值） */
+  quota?: {
+    remaining: number;
+    resetAt: string;
+  };
 }
 
 /**

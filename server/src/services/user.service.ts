@@ -5,6 +5,7 @@ import { prisma } from "../prisma/client";
 import { HttpError } from "../utils/http-error";
 import { signAccessToken } from "../utils/jwt";
 import { logError } from "../utils/logger";
+import { calcFreeQuotaRemaining, DAILY_FREE_LIMIT } from "./quota.service";
 import { storage } from "./storage";
 
 /**
@@ -63,9 +64,16 @@ const sanitizeUser = (user: {
   nickname: string;
   avatar: string;
   status: string;
+  freeQuotaUsed: number;
+  freeQuotaResetAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }) => {
+  const quota = calcFreeQuotaRemaining({
+    freeQuotaUsed: user.freeQuotaUsed,
+    freeQuotaResetAt: user.freeQuotaResetAt,
+  });
+
   return {
     id: user.id,
     username: user.username,
@@ -78,6 +86,12 @@ const sanitizeUser = (user: {
     hasWx: Boolean(user.openid),
     /** 是否已设置密码，前端用于判断展示 */
     hasPassword: Boolean((user as { passwordHash?: string | null }).passwordHash),
+    /** 今日剩余免费次数（懒重置后的值） */
+    freeQuotaRemaining: quota.remaining,
+    /** 免费次数上限，前端用于显示 "x / 10" */
+    freeQuotaLimit: DAILY_FREE_LIMIT,
+    /** 下一次重置时间（ISO 字符串） */
+    freeQuotaResetAt: quota.resetAt.toISOString(),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };

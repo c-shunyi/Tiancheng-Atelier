@@ -6,6 +6,7 @@ import { prisma } from "../prisma/client";
 import { HttpError } from "../utils/http-error";
 import { logError } from "../utils/logger";
 import { getPromptPresetById } from "./prompt.service";
+import { consumeFreeQuota } from "./quota.service";
 import { storage } from "./storage";
 
 /**
@@ -233,14 +234,19 @@ export const createCreation = async (params: {
   const sourceKey = `users/${userId}/creation/source/${randomUUID()}.${ext}`;
   await storage.put(sourceKey, file.buffer, file.mimetype);
 
-  const record = await prisma.creation.create({
-    data: {
-      userId,
-      prompt: trimmedPrompt,
-      sourceImageKey: sourceKey,
-      model: config.arkModel,
-      size: DEFAULT_SIZE,
-    },
+  // 事务内扣减今日免费次数 + 插入 pending 记录，避免并发下超扣/超发
+  const { record, quota } = await prisma.$transaction(async (tx) => {
+    const quota = await consumeFreeQuota(tx, userId);
+    const record = await tx.creation.create({
+      data: {
+        userId,
+        prompt: trimmedPrompt,
+        sourceImageKey: sourceKey,
+        model: config.arkModel,
+        size: DEFAULT_SIZE,
+      },
+    });
+    return { record, quota };
   });
 
   // 触发后台处理，调用方不等待
@@ -252,7 +258,7 @@ export const createCreation = async (params: {
     sourceMimeType: file.mimetype,
   });
 
-  return toCreationDto(record);
+  return { ...toCreationDto(record), quota };
 };
 
 /**

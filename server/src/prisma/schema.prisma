@@ -49,17 +49,21 @@ enum UserStatus {
 }
 
 model User {
-  id           Int        @id @default(autoincrement())
-  username     String?    @unique @db.VarChar(64)
-  phone        String?    @unique @db.VarChar(20)
-  passwordHash String?    @map("password_hash") @db.VarChar(255)
-  openid       String?    @unique @db.VarChar(64)
-  unionid      String?    @unique @db.VarChar(64)
-  nickname     String     @default("") @db.VarChar(64)
-  avatar       String     @default("") @db.VarChar(512)
-  status       UserStatus @default(active)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  id                Int        @id @default(autoincrement())
+  username          String?    @unique @db.VarChar(64)
+  phone             String?    @unique @db.VarChar(20)
+  passwordHash      String?    @map("password_hash") @db.VarChar(255)
+  openid            String?    @unique @db.VarChar(64)
+  unionid           String?    @unique @db.VarChar(64)
+  nickname          String     @default("") @db.VarChar(64)
+  avatar            String     @default("") @db.VarChar(512)
+  status            UserStatus @default(active)
+  /// 今日已消耗的免费次数；每当跨过 freeQuotaResetAt 后重置为 0
+  freeQuotaUsed     Int        @default(0) @map("free_quota_used")
+  /// 下一次免费额度重置时间（通常为次日 00:00），请求时若已过则重置
+  freeQuotaResetAt  DateTime   @default(now()) @map("free_quota_reset_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
 
   @@map("users")
 }
