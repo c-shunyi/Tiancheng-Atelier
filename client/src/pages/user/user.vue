@@ -20,6 +20,10 @@ function goLogin() {
   uni.navigateTo({ url: "/pages/login/login" });
 }
 
+function goProfileEdit() {
+  uni.navigateTo({ url: "/pages/profile-edit/profile-edit" });
+}
+
 function handleLogout() {
   userStore.logout();
   uni.showToast({ title: "已退出登录", icon: "success" });
@@ -28,7 +32,12 @@ function handleLogout() {
 
 <template>
   <view class="page">
-    <view v-if="userStore.isLoggedIn" class="card">
+    <view
+      v-if="userStore.isLoggedIn"
+      class="profile-card"
+      hover-class="profile-card--hover"
+      @click="goProfileEdit"
+    >
       <image
         v-if="userStore.user?.avatar"
         class="avatar"
@@ -36,12 +45,18 @@ function handleLogout() {
         mode="aspectFill"
       />
       <view v-else class="avatar placeholder" />
-      <text class="nickname">
-        {{ userStore.user?.nickname || userStore.user?.username || userStore.user?.phone || "用户" }}
-      </text>
-      <text v-if="userStore.user?.username" class="meta">用户名：{{ userStore.user.username }}</text>
-      <text v-if="userStore.user?.phone" class="meta">手机号：{{ userStore.user.phone }}</text>
-      <text v-if="userStore.user?.hasWx" class="meta">已绑定微信</text>
+      <view class="info">
+        <text class="nickname">
+          {{ userStore.user?.nickname || userStore.user?.username || userStore.user?.phone || "未设置昵称" }}
+        </text>
+        <text class="meta">
+          {{ userStore.user?.phone || userStore.user?.username || "点击完善个人信息" }}
+        </text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view v-if="userStore.isLoggedIn" class="card">
       <button class="danger" @click="handleLogout">退出登录</button>
     </view>
 

@@ -23,6 +23,12 @@
       "style": {
         "navigationBarTitleText": "我的"
       }
+    },
+    {
+      "path": "pages/profile-edit/profile-edit",
+      "style": {
+        "navigationBarTitleText": "编辑个人信息"
+      }
     }
   ],
   "globalStyle": {
@@ -45,11 +51,15 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "static/tabber/home.png",
+        "selectedIconPath": "static/tabber/home-active.png"
       },
       {
         "pagePath": "pages/user/user",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "static/tabber/mine.png",
+        "selectedIconPath": "static/tabber/mine-active.png"
       }
     ]
   }
