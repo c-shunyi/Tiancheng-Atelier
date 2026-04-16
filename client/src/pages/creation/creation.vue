@@ -122,6 +122,12 @@ function previewResult(task: Creation) {
 
 function saveResult(task: Creation) {
   if (!task.resultUrl) return;
+  // #ifdef H5
+  // H5 浏览器不支持 saveImageToPhotosAlbum，直接新标签打开让用户右键保存
+  window.open(task.resultUrl, "_blank");
+  return;
+  // #endif
+  // #ifndef H5
   uni.downloadFile({
     url: task.resultUrl,
     success: (res) => {
@@ -137,6 +143,7 @@ function saveResult(task: Creation) {
     },
     fail: (err) => uni.showToast({ title: err.errMsg ?? "下载失败", icon: "none" }),
   });
+  // #endif
 }
 
 function goHistory() {
