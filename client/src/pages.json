@@ -19,6 +19,18 @@
       }
     },
     {
+      "path": "pages/creation/creation",
+      "style": {
+        "navigationBarTitleText": "创作"
+      }
+    },
+    {
+      "path": "pages/creation-history/creation-history",
+      "style": {
+        "navigationBarTitleText": "我的创作"
+      }
+    },
+    {
       "path": "pages/user/user",
       "style": {
         "navigationBarTitleText": "我的"
@@ -52,6 +64,12 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页",
+        "iconPath": "static/tabber/home.png",
+        "selectedIconPath": "static/tabber/home-active.png"
+      },
+      {
+        "pagePath": "pages/creation/creation",
+        "text": "创作",
         "iconPath": "static/tabber/home.png",
         "selectedIconPath": "static/tabber/home-active.png"
       },

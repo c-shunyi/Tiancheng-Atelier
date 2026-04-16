@@ -52,6 +52,16 @@ const config = {
    * 对外可访问的基础 URL，用于拼接文件公开访问地址。
    */
   publicBaseUrl: readStringEnv("PUBLIC_BASE_URL", "http://localhost:3000"),
+
+  /**
+   * DMX 图生图 API 配置。
+   */
+  arkApiKey: readStringEnv("ARK_API_KEY", ""),
+  arkApiUrl: readStringEnv(
+    "ARK_API_URL",
+    "https://www.dmxapi.cn/v1/images/generations",
+  ),
+  arkModel: readStringEnv("ARK_MODEL", "doubao-seedream-4-5-251128"),
 };
 
 export default config;

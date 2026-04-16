@@ -63,3 +63,26 @@ model User {
 
   @@map("users")
 }
+
+enum CreationStatus {
+  pending
+  success
+  failed
+}
+
+model Creation {
+  id             Int            @id @default(autoincrement())
+  userId         Int            @map("user_id")
+  prompt         String         @db.Text
+  sourceImageKey String         @map("source_image_key") @db.VarChar(512)
+  resultImageKey String         @default("") @map("result_image_key") @db.VarChar(512)
+  model          String         @db.VarChar(64)
+  size           String         @db.VarChar(16)
+  status         CreationStatus @default(pending)
+  errorMessage   String?        @map("error_message") @db.VarChar(512)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt])
+  @@map("creations")
+}

@@ -51,3 +51,31 @@ export interface AuthResult {
   /** 当前登录用户的资料快照 */
   userInfo: User;
 }
+
+/**
+ * 图生图任务状态。
+ */
+export type CreationStatus = "pending" | "success" | "failed";
+
+/**
+ * 图生图创作记录（返回给前端的视图模型）。
+ */
+export interface Creation {
+  id: number;
+  prompt: string;
+  size: string;
+  sourceUrl: string;
+  resultUrl: string;
+  status: CreationStatus;
+  createdAt: string;
+}
+
+/**
+ * 创作历史分页响应。
+ */
+export interface CreationList {
+  page: number;
+  pageSize: number;
+  total: number;
+  list: Creation[];
+}
