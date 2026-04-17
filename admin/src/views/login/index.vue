@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <el-card class="login-card" shadow="always">
-      <h2 style="text-align: center; margin-bottom: 24px">天成画坊 · 管理台</h2>
+      <h2 style="text-align: center; margin-bottom: 24px">甜橙工坊 · 管理台</h2>
       <el-form ref="formRef" :model="form" :rules="rules" @submit.prevent="handleLogin">
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="管理员账号" :prefix-icon="User" size="large" />

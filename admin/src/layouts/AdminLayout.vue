@@ -1,7 +1,7 @@
 <template>
   <el-container style="height: 100%">
     <el-aside width="200px" style="background: #001529">
-      <div class="logo">天成画坊</div>
+      <div class="logo">甜橙工坊</div>
       <el-menu
         :default-active="route.path"
         router
