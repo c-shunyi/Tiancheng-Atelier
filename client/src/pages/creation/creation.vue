@@ -119,6 +119,10 @@ async function loadPresets() {
 
 function openCreate() {
   if (!ensureLogin()) return;
+  if (userStore.user && userStore.user.freeQuotaRemaining <= 0) {
+    toast.show("今日次数已用完");
+    return;
+  }
   createOpen.value = true;
 }
 

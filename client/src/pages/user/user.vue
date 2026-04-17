@@ -32,6 +32,10 @@ function goAddress() {
   uni.navigateTo({ url: "/pages/address/address" });
 }
 
+function goAbout() {
+  uni.navigateTo({ url: "/pages/about/about" });
+}
+
 function handleLogout() {
   userStore.logout();
   uni.showToast({ title: "已退出登录", icon: "success" });
@@ -79,6 +83,14 @@ function handleLogout() {
         @click="goAddress"
       >
         <text class="menu-label">收货地址</text>
+        <text class="arrow">›</text>
+      </view>
+      <view
+        class="menu-item"
+        hover-class="menu-item--hover"
+        @click="goAbout"
+      >
+        <text class="menu-label">关于我们</text>
         <text class="arrow">›</text>
       </view>
     </view>

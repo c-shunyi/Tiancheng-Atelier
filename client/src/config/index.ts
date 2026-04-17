@@ -3,7 +3,7 @@
  * 通过 .env 中的 `VITE_API_BASE_URL` 覆盖；缺省指向本地 server 的 `/api` 前缀。
  */
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://192.168.31.56:3000/api";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api";
 
 /**
  * 本地缓存 token 的 key。

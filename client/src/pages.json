@@ -61,6 +61,12 @@
       "style": {
         "navigationBarTitleText": "编辑地址"
       }
+    },
+    {
+      "path": "pages/about/about",
+      "style": {
+        "navigationBarTitleText": "关于我们"
+      }
     }
   ],
   "globalStyle": {
